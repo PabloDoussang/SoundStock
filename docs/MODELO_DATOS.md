@@ -1,11 +1,6 @@
-# Modelo de datos
+# Modelo de datos · SQLite
 
-## Representación U1 sin base de datos
-
-En modo U1, los mismos atributos se representan como diccionarios JSON: `products`, `movements` y `users`. Los identificadores son enteros; las fechas son textos ISO 8601; stock y cantidades son enteros; active es booleano. `u1/store.py` carga los datos, y `u1/views.py` los convierte en listas y contextos para las plantillas. No existen consultas SQL ni migraciones ejecutadas en este modo. El esquema Django descrito abajo corresponde a la ampliación SQLite.
-
-Las escrituras JSON se agrupan bajo un bloqueo del proceso y un reemplazo de archivo; un error antes del reemplazo conserva el archivo anterior. Este prototipo se ejecuta con un único proceso local. No equivale a la concurrencia de una base de datos productiva.
-
+Todos los datos operativos y cuentas se guardan en `db.sqlite3`, en la raíz del proyecto. Las sesiones se almacenan en `django_session`. Refrescar, cerrar sesión y reiniciar no eliminan los registros.
 
 ## Product
 

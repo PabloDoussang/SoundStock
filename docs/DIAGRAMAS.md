@@ -67,7 +67,7 @@ flowchart TD
   I --> J{"¿Formulario válido?"}
   J -- No --> K["Mostrar errores y conservar valores"]
   K --> F
-  J -- Sí --> L["Abrir escritura protegida: JSON U1 o transacción SQLite"]
+  J -- Sí --> L["Abrir transacción SQLite"]
   L --> M{"¿UUID ya registrado?"}
   M -- Sí --> N["Mismo usuario: devolver operación existente"]
   N --> Z["Mensaje y redirección al historial"]
@@ -89,7 +89,7 @@ flowchart TD
   Z --> AA([Nueva operación o navegar])
 ```
 
-Si el producto deja de estar activo, se rechaza sin escribir. Un UUID ajeno se rechaza. En U1, la escritura JSON usa un archivo temporal y reemplazo conjunto; en SQLite, una transacción. Si falla antes de confirmar, se conserva el estado anterior. Un bloqueo temporal de SQLite muestra un error y permite reintentar con el mismo identificador.
+Si el producto deja de estar activo, se rechaza sin escribir. Un UUID ajeno se rechaza. SQLite agrupa las escrituras en una transacción. Si falla antes de confirmar, se conserva el estado anterior. Un bloqueo temporal de SQLite muestra un error y permite reintentar con el mismo identificador.
 
 ## 3. Orden para dibujarlo en Draw.io
 
@@ -100,6 +100,10 @@ Si el producto deja de estar activo, se rechaza sin escribir. Un UUID ajeno se r
 5. Una rama por sección según el primer diagrama.
 6. Para modificaciones: rombo de permiso → formulario → rombo de validación.
 7. Para stock: transacción → UUID → tipo → cálculo → validación de saldo → guardar historial y stock → confirmar.
-8. En U1 la persistencia se representa con un archivo JSON; en SQLite, con un cilindro de base de datos. Conecta errores al formulario y operaciones exitosas al historial.
+8. La persistencia se representa con un cilindro de base de datos SQLite. Conecta errores al formulario y operaciones exitosas al historial.
 9. Conecta cierre de sesión al ingreso.
 10. Usa cilindros para representar SQLite si quieres separar visualmente persistencia de procesos.
+
+## Persistencia al volver a abrir
+
+Guardar formulario válido → confirmar transacción en db.sqlite3 → mostrar éxito. Refrescar o cambiar de sección → consultar la misma base. Cerrar sesión → invalidar sesión y conservar datos. Reiniciar → abrir la misma base → ingresar y leer los últimos cambios confirmados. Una edición directa de SQLite requiere COMMIT o Guardar cambios en el editor.

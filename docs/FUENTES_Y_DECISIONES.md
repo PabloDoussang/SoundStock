@@ -41,6 +41,6 @@ Revisa especialmente models.py → forms.py → services.py → views.py → tem
 
 Bootstrap 5.3.8 conserva su encabezado de licencia MIT en static/vendor/bootstrap.min.css.
 
-## Revisión posterior para U1
+## Alcance final solicitado
 
-Se añadió un modo evaluable sin base de datos, con vistas de listas/diccionarios JSON y sesiones firmadas. La versión SQLite permanece separada. Se corrigieron nombres de usuario con espacios y se añadieron pruebas. La revisión visual de escritorio y sus límites están documentados en REVISION_RUBRICA.md.
+El usuario solicitó eliminar la opción sin base de datos y conservar únicamente SQLite. Esta decisión prevalece sobre el alcance sin BD del PDF U1 y queda explícita en la matriz. El JSON de catálogo restante contiene solo productos ficticios para carga inicial opcional; no almacena usuarios ni operaciones. Se añadieron pruebas de persistencia entre procesos, sesiones y modificaciones directas de la base.
