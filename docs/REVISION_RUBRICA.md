@@ -23,4 +23,4 @@ No se declara validación visual móvil completa: el intento anterior de cambiar
 
 ## GitHub
 
-Repositorio: https://github.com/PabloDoussang/SoundStock . La publicación del código se completa y documenta tras verificar los archivos del remoto. No se suben runtime, la base de respaldo, cuentas, hashes ni claves locales.
+Repositorio: https://github.com/PabloDoussang/SoundStock . Publicación completada y verificada el 3 de septiembre de 2026. Se comprobó el código funcional en el commit a2a4a3afa7e6869db1291824e8a76fce929a6638 y los archivos del remoto: index.html en la raíz, iniciar.bat, manage.py, config, warehouse, templates, static y docs. No se suben runtime, la base de respaldo, cuentas, hashes ni claves locales.

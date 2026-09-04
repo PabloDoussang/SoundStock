@@ -121,4 +121,4 @@ Las pruebas usan archivos temporales, prohíben el acceso a base de datos y comp
 
 ![Flujo general](docs/flujo-general.png)
 
-Repositorio: [PabloDoussang/SoundStock](https://github.com/PabloDoussang/SoundStock). La publicación se documenta en la revisión cuando los archivos estén verificados en el remoto. GitHub almacena código; para abrir esta aplicación ejecuta el servidor Django. No se incluyen tienda, pagos, GPS ni API REST/JWT.
+Repositorio: [PabloDoussang/SoundStock](https://github.com/PabloDoussang/SoundStock). Código publicado y verificado en la rama main, con index.html en la raíz. GitHub almacena código; para abrir esta aplicación ejecuta el servidor Django. No se incluyen tienda, pagos, GPS ni API REST/JWT.

@@ -65,6 +65,6 @@ Crea un usuario nuevo y carga los datos demo si quieres. Las cuentas y runtime/b
 
 El enlace al repositorio, el diagrama de flujo, la matriz de rúbrica y una demostración con ingreso, búsqueda de producto, entrada, salida, ajuste, alerta y reporte. Explica las diferencias entre cantidad movida y conteo final, y por qué las salidas deben validarse en el servidor.
 
-**GitHub almacena el código; no pone en marcha el servidor Django.** Para una URL pública se necesita un alojamiento Python independiente. La creación del repositorio fue verificada; la publicación de sus archivos debe comprobarse después de subirlos. Esta entrega contiene una única versión U1 con JSON, sin base de datos.
+**GitHub almacena el código; no pone en marcha el servidor Django.** Para una URL pública se necesita un alojamiento Python independiente. El código completo fue publicado y verificado en la rama main. Estas instrucciones sirven para clonar, ejecutar y enviar cambios posteriores. Esta entrega contiene una única versión U1 con JSON, sin base de datos.
 
 Referencia: [Guía oficial de GitHub para agregar código local](https://docs.github.com/en/migrations/importing-source-code/using-the-command-line-to-import-source-code/adding-locally-hosted-code-to-github).

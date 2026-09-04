@@ -11,7 +11,7 @@ La versión actual usa Django, plantillas y JSON sin conexión a una base de dat
 | 3 | Condiciones, bucles, bifurcaciones y navegación | warehouse/views.py y docs/DIAGRAMAS.md |
 | 4 | Plantillas que muestran datos del servidor | index.html en la raíz; templates con variables, if, for y filtros |
 | 5 | Paquetes y librerías externas | requirements.txt, Django, Bootstrap local en static/vendor |
-| 6 | Formularios, mensajes y repositorio GitHub | Django forms/messages; publicación pendiente de verificación final |
+| 6 | Formularios, mensajes y repositorio GitHub | Django forms/messages; código completo publicado en [PabloDoussang/SoundStock](https://github.com/PabloDoussang/SoundStock), rama main |
 | 7 | Proyecto y aplicación registrados | config/settings.py y warehouse/apps.py |
 | 8 | Rutas semánticas con path y name | config/urls.py, warehouse/urls.py y navegación compartida |
 | 9 | Peticiones, diccionarios de contexto y render | warehouse/views.py: procesa listas/diccionarios y renderiza plantillas |
