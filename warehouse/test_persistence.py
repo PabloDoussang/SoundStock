@@ -1,4 +1,4 @@
-"""Comprueba persistencia real en disco entre procesos, sin usar la base local."""
+"""Persistencia entre tres procesos, sin SQL ni datos del usuario real."""
 import os
 from pathlib import Path
 import subprocess
@@ -15,84 +15,110 @@ os.environ['DJANGO_SETTINGS_MODULE'] = 'config.settings'
 os.environ['DJANGO_DEBUG'] = '1'
 os.environ['DJANGO_SECRET_KEY'] = 'solo-pruebas-de-persistencia'
 import config.settings as project
-project.DATABASES['default']['NAME'] = os.environ['SOUNDSTOCK_TEST_DATABASE']
+from pathlib import Path
+project.U1_DATA_FILE = Path(os.environ['SOUNDSTOCK_TEST_JSON'])
+assert project.DATABASES == {}, 'Esta entrega no debe configurar bases de datos'
 import django
 django.setup()
 from django.core.management import call_command
-from django.contrib.auth.models import User
+from django.contrib.auth.hashers import make_password, check_password
 from django.test import Client
 from django.urls import reverse
-from warehouse.models import Product, Movement
+from warehouse import store
 from unittest.mock import patch
 import uuid
+
+def saved_user(name):
+    return next(user for user in store.read()['users'] if user['username'] == name)
+
+def saved_product(code):
+    return next(product for product in store.read()['products'] if product['code'] == code)
+
+def login(client, name, password):
+    assert client.post(reverse('login'), dict(username=name, password=password)).status_code == 302
+    assert client.get(reverse('products')).status_code == 200
 """
 
 
 class DiskPersistenceTests(SimpleTestCase):
-    def test_saved_changes_survive_refresh_logout_restart_and_database_edits(self):
-        with tempfile.TemporaryDirectory(prefix='soundstock-test-') as directory:
-            database = Path(directory) / 'test.sqlite3'
-            environment = {**os.environ, 'SOUNDSTOCK_TEST_DATABASE': str(database)}
+    def test_saved_changes_survive_refresh_logout_reopen_and_process_restarts(self):
+        with tempfile.TemporaryDirectory(prefix='soundstock-persistence-') as directory:
+            data_file = Path(directory) / 'bodega.json'
+            environment = {**os.environ, 'SOUNDSTOCK_TEST_JSON': str(data_file)}
             phases = [
                 """
-call_command('migrate', verbosity=0)
-User.objects.create_superuser('Responsable prueba', password='Fixture-Inicial-829!')
+# Primer proceso: guardar administradores, productos y movimientos desde formularios.
+with store.edit() as data:
+    data['users'].append(dict(id=1, username='Responsable prueba', first_name='Responsable',
+        last_name='', email='', role='Administrador', is_active=True,
+        password=make_password('Fixture-Inicial-829!'), session_version=str(uuid.uuid4())))
 client = Client()
-assert client.login(username='Responsable prueba', password='Fixture-Inicial-829!')
+login(client, 'Responsable prueba', 'Fixture-Inicial-829!')
 account = dict(username='Admin persistente', first_name='Antes', last_name='Prueba',
                email='', is_active='on', role='Administrador', password='Fixture-Nueva-937!')
 assert client.post(reverse('user_new'), account).status_code == 302
-admin = User.objects.get(username=account['username'])
+admin_id = saved_user(account['username'])['id']
 account.update(first_name='Guardado', password='Fixture-Editada-618!')
-assert client.post(reverse('user_edit', args=[admin.pk]), account).status_code == 302
+assert client.post(reverse('user_edit', args=[admin_id]), account).status_code == 302
 product_data = dict(code='MP-PERSIST', name='Antes', category='Cuerdas', location='A-01', minimum=2)
 assert client.post(reverse('product_new'), product_data).status_code == 302
-product = Product.objects.get(code='MP-PERSIST')
+product_id = saved_product('MP-PERSIST')['id']
 product_data.update(name='Producto guardado', location='B-02')
-assert client.post(reverse('product_edit', args=[product.pk]), product_data).status_code == 302
+assert client.post(reverse('product_edit', args=[product_id]), product_data).status_code == 302
 for kind, quantity in [('entrada', 10), ('salida', 3)]:
-    response = client.post(reverse('movement_new'), dict(product=product.pk, kind=kind,
+    response = client.post(reverse('movement_new'), dict(product=product_id, kind=kind,
         quantity=quantity, reason='Persistencia', destination='Sucursal del rock', token=str(uuid.uuid4())))
     assert response.status_code == 302
+archive_data = dict(code='MP-ARCHIVE', name='Producto archivado', category='Audio', location='C-02', minimum=0)
+assert client.post(reverse('product_new'), archive_data).status_code == 302
+archive_id = saved_product('MP-ARCHIVE')['id']
+assert client.post(reverse('product_archive', args=[archive_id])).status_code == 302
 for _ in range(2):
     assert 'Producto guardado' in client.get(reverse('products')).content.decode()
 assert client.post(reverse('logout')).status_code == 302
 assert client.get(reverse('products')).status_code == 302
 fresh_browser = Client()
-assert fresh_browser.login(username='Admin persistente', password='Fixture-Editada-618!')
+login(fresh_browser, 'Admin persistente', 'Fixture-Editada-618!')
 assert fresh_browser.get(reverse('users')).status_code == 200
-assert Product.objects.get(pk=product.pk).stock == 7
-assert Movement.objects.count() == 2
+assert saved_product('MP-PERSIST')['stock'] == 7
+assert not saved_product('MP-ARCHIVE')['active']
+assert len(store.read()['movements']) == 2
 """,
                 """
-# Segundo proceso: arranque normal, sin reinicializar datos existentes.
-call_command('migrate', verbosity=0)
+# Segundo proceso: iniciar de nuevo no pide cuentas ni reinicia el archivo.
+before = project.U1_DATA_FILE.read_bytes()
 with patch('builtins.input', side_effect=AssertionError('El inicio no debe recrear los datos')):
     call_command('preparar')
-admin = User.objects.get(username='Admin persistente')
-assert admin.first_name == 'Guardado' and admin.is_superuser and admin.is_active
-assert admin.check_password('Fixture-Editada-618!')
-assert not admin.check_password('Fixture-Nueva-937!')
-product = Product.objects.get(code='MP-PERSIST')
-assert (product.name, product.location, product.stock) == ('Producto guardado', 'B-02', 7)
-assert list(Movement.objects.order_by('id').values_list('before', 'after')) == [(0, 10), (10, 7)]
-# Cambios confirmados directamente en la base, fuera de la sesión del navegador.
-from django.db import connection, transaction
-with transaction.atomic(), connection.cursor() as cursor:
-    cursor.execute('UPDATE warehouse_product SET location = %s WHERE id = %s', ['C-03', product.pk])
-admin.first_name = 'Editado en base'
-admin.set_password('Fixture-Base-528!')
-admin.save(update_fields=['first_name', 'password'])
+assert project.U1_DATA_FILE.read_bytes() == before
+admin = saved_user('Admin persistente')
+assert admin['first_name'] == 'Guardado' and admin['role'] == 'Administrador' and admin['is_active']
+assert check_password('Fixture-Editada-618!', admin['password'])
+assert not check_password('Fixture-Nueva-937!', admin['password'])
+product = saved_product('MP-PERSIST')
+assert (product['name'], product['location'], product['stock']) == ('Producto guardado', 'B-02', 7)
+assert not saved_product('MP-ARCHIVE')['active']
+assert [(m['before'], m['after']) for m in store.read()['movements']] == [(0, 10), (10, 7)]
+# Modificar de nuevo tras reiniciar y comprobarlo desde otro proceso independiente.
+client = Client()
+login(client, 'Admin persistente', 'Fixture-Editada-618!')
+account = dict(username='Admin persistente', first_name='Editado después del reinicio',
+    last_name='Prueba', email='', is_active='on', role='Administrador', password='Fixture-Final-528!')
+assert client.post(reverse('user_edit', args=[admin['id']]), account).status_code == 302
+assert client.get(reverse('users')).status_code == 200
+product_data = dict(code='MP-PERSIST', name='Producto guardado', category='Cuerdas', location='C-03', minimum=2)
+assert client.post(reverse('product_edit', args=[product['id']]), product_data).status_code == 302
 """,
                 """
-# Tercer proceso: leer las modificaciones confirmadas de la base.
+# Tercer proceso: las modificaciones posteriores al reinicio también permanecen.
 client = Client()
-assert client.login(username='Admin persistente', password='Fixture-Base-528!')
-assert not User.objects.get(username='Admin persistente').check_password('Fixture-Editada-618!')
-assert User.objects.get(username='Admin persistente').first_name == 'Editado en base'
+login(client, 'Admin persistente', 'Fixture-Final-528!')
+admin = saved_user('Admin persistente')
+assert not check_password('Fixture-Editada-618!', admin['password'])
+assert admin['first_name'] == 'Editado después del reinicio'
 assert 'C-03' in client.get(reverse('products')).content.decode()
-assert Product.objects.get(code='MP-PERSIST').stock == 7
-assert Movement.objects.count() == 2
+assert saved_product('MP-PERSIST')['stock'] == 7
+assert not saved_product('MP-ARCHIVE')['active']
+assert len(store.read()['movements']) == 2
 assert client.get(reverse('users')).status_code == 200
 """,
             ]
@@ -103,4 +129,5 @@ assert client.get(reverse('users')).status_code == 200
                         env=environment, capture_output=True, text=True, timeout=60,
                     )
                     self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-                    self.assertTrue(database.is_file())
+                    self.assertTrue(data_file.is_file())
+            self.assertFalse(list(Path(directory).glob('*.sqlite3')))

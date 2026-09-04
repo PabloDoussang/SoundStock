@@ -27,7 +27,7 @@ git commit -m "Implementa sistema de bodega Music Pro"
 
 Los valores entre comillas se reemplazan por tus datos. La configuración se aplica solo a este repositorio.
 
-Antes del commit, revisa que no aparezcan `db.sqlite3`, `.local-secret`, `.env`, contraseñas ni `.venv`. El .gitignore incluido ya los excluye. No copies ACCESO_LOCAL.txt a esta carpeta.
+Antes del commit, revisa que no aparezcan `runtime/`, bases de respaldo, `.local-secret`, `.env`, contraseñas ni `.venv`. El .gitignore incluido ya los excluye. No copies ACCESO_LOCAL.txt a esta carpeta.
 
 ## 4. Conectar y subir
 
@@ -59,12 +59,12 @@ cd SoundStock
 .\iniciar.bat
 ```
 
-Crea un usuario nuevo y carga los datos demo si quieres. Las cuentas y la base local no viajan en el repositorio.
+Crea un usuario nuevo y carga los datos demo si quieres. Las cuentas y runtime/bodega.json no viajan en el repositorio.
 
 ## Qué entregar al docente
 
 El enlace al repositorio, el diagrama de flujo, la matriz de rúbrica y una demostración con ingreso, búsqueda de producto, entrada, salida, ajuste, alerta y reporte. Explica las diferencias entre cantidad movida y conteo final, y por qué las salidas deben validarse en el servidor.
 
-**GitHub almacena el código; no pone en marcha el servidor Django.** Para una URL pública se necesita un alojamiento Python independiente. La creación del repositorio fue verificada; la publicación de sus archivos debe comprobarse después de subirlos. Esta entrega contiene únicamente SQLite.
+**GitHub almacena el código; no pone en marcha el servidor Django.** Para una URL pública se necesita un alojamiento Python independiente. La creación del repositorio fue verificada; la publicación de sus archivos debe comprobarse después de subirlos. Esta entrega contiene una única versión U1 con JSON, sin base de datos.
 
 Referencia: [Guía oficial de GitHub para agregar código local](https://docs.github.com/en/migrations/importing-source-code/using-the-command-line-to-import-source-code/adding-locally-hosted-code-to-github).

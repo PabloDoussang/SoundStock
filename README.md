@@ -1,130 +1,124 @@
 # SoundStock · Bodega Music Pro
 
-Sistema de bodega en Django con **una única versión y base de datos SQLite**: inventario, ubicaciones, entradas, salidas, ajustes, historial, gráficas, CSV y roles. La plantilla principal `index.html` está en la carpeta raíz, junto a `manage.py` e `iniciar.bat`.
+Prototipo funcional de bodega para **Unidad 1: Tecnologías del lado del servidor**. Usa Django, HTML dinámico, Bootstrap local y datos JSON, **sin conexión a base de datos**. Incluye inventario, ubicaciones, entradas, salidas, ajustes, historial, gráficas, CSV y roles.
 
-## Cómo acceder
+Hay una única versión y un único iniciador: **`iniciar.bat`**, puerto **8000**. La plantilla principal **`index.html` está en la carpeta raíz**.
+
+## Cómo abrir la página
 
 1. Instala Python 3.12 con el lanzador `py` y extrae el ZIP completo.
-2. Abre la carpeta **SoundStock**, donde están `index.html` y `manage.py`.
-3. Ejecuta **iniciar.bat**. La primera ejecución instala dependencias, prepara la base y solicita una cuenta administradora si no existe una activa. La contraseña no se muestra al escribir.
-4. Si el inventario está vacío, puedes cargar productos ficticios para probar el sistema.
-5. Abre [http://127.0.0.1:8000/ingresar/](http://127.0.0.1:8000/ingresar/) e ingresa con tu cuenta.
-6. Navega mediante el menú: todas las secciones se abren en la misma pestaña.
-7. Mantén abierta la consola. Para detener el servidor, presiona **Ctrl+C**. Para volver, ejecuta otra vez `iniciar.bat`.
+2. Abre la carpeta **SoundStock**, donde están `index.html`, `manage.py` e `iniciar.bat`.
+3. Ejecuta **iniciar.bat**. La primera ejecución instala las dependencias y solicita crear una cuenta administradora. La contraseña no se muestra al escribir.
+4. Elige si deseas cargar los productos ficticios para probar el inventario.
+5. Abre [http://127.0.0.1:8000/ingresar/](http://127.0.0.1:8000/ingresar/) e ingresa con la cuenta creada.
+6. Cambia de sección mediante el menú: la navegación permanece en la misma pestaña.
+7. Mantén abierta la consola mientras usas la página. Para detenerla, presiona **Ctrl+C**; para volver, ejecuta nuevamente `iniciar.bat`.
 
-En el equipo original se conserva la cuenta **Pablo Doussang** y la contraseña que configuraste. Las cuentas y la base local no se distribuyen en el ZIP ni en GitHub; una instalación nueva solicita crear su propia cuenta. Los nombres de usuario admiten espacios.
+En el equipo original se conservó la cuenta **Pablo Doussang** con su contraseña configurada, así como los productos y movimientos existentes. Esos datos privados no se distribuyen en el ZIP ni en GitHub. Una instalación nueva solicita crear su propia cuenta. Se permiten espacios en los nombres de usuario.
 
-No abras `index.html` con doble clic: es una plantilla que Django debe procesar. Accede por la dirección del servidor.
+No abras `index.html` directamente: Django debe procesar esa plantilla. Accede por la dirección anterior.
 
-## Dónde se guardan los datos
+## Los datos sí se conservan
 
-La base **`db.sqlite3`**, en la carpeta principal, contiene usuarios, administradores, permisos, productos, existencias, movimientos y sesiones. Las contraseñas se guardan mediante hash. La ruta de la base depende de la carpeta del proyecto, no de dónde abras la consola.
+Usuarios, hashes de contraseñas, permisos, productos y movimientos se guardan en **`runtime/bodega.json`**. Este archivo permite conservar cambios sin conectar a una base de datos, como exige U1.
 
-| Acción | Resultado |
+| Acción | Qué ocurre |
 |---|---|
-| Guardar un usuario, producto o movimiento válido | El servidor confirma el cambio en SQLite |
-| Refrescar o cambiar de sección | Se leen los datos guardados en la base |
-| Cerrar sesión, cerrar el navegador o apagar el equipo | Se conservan las cuentas y los datos; puede ser necesario ingresar de nuevo |
-| Volver a ejecutar `iniciar.bat` | Se reutiliza la misma base; no se restablece el inventario |
-| Editar directamente la misma base y confirmar la transacción | El cambio permanece y se ve al recargar la sección correspondiente |
-| Escribir en un formulario sin pulsar Guardar | El borrador no se conserva al abandonar la página |
+| Guardar un formulario válido | El servidor escribe los cambios en el JSON |
+| Refrescar o cambiar de sección | La página vuelve a consultar los datos guardados |
+| Cerrar sesión o cerrar el navegador | La cuenta y el inventario permanecen |
+| Detener el servidor o reiniciar el equipo | Los datos permanecen; ejecuta otra vez `iniciar.bat` |
+| Volver a iniciar el proyecto | Se reutiliza el JSON existente, sin reinicializarlo |
+| Abandonar un formulario sin guardar | El borrador no se conserva |
 
-La aplicación **no guarda una copia de los datos en el navegador**. Cerrar sesión elimina el acceso de esa sesión, no tu cuenta ni el inventario. Una sesión puede vencer a las 8 horas sin borrar los datos.
+Cerrar sesión invalida el acceso de esa sesión, no elimina la cuenta ni el inventario. Las sesiones firmadas vencen a las 8 horas. Las contraseñas se almacenan mediante hash; se cambian desde **Usuarios y roles**.
 
-Para cambios directos en SQLite, confirma con **Guardar cambios / Write Changes / COMMIT** en la herramienta que utilices. Un cambio sin confirmar puede revertirse al cerrar esa herramienta. Las contraseñas deben cambiarse desde Usuarios y roles, Django Admin o `changepassword`, que generan el hash correcto. Las existencias se modifican desde Operaciones de stock para registrar también el historial.
+El servidor guarda las operaciones con un archivo temporal y reemplazo atómico: historial y stock se guardan juntos. Un error de validación no escribe cambios. El proyecto está diseñado para **una instancia local del servidor**; no ejecutes varios servidores simultáneamente sobre el mismo JSON.
 
-**Conserva `db.sqlite3` al actualizar el código.** No lo borres ni lo reemplaces por una base vacía. Extraer el proyecto en otra carpeta crea una instalación independiente. Para conservar datos en otra instalación, detén el servidor, copia la base a la carpeta de destino y vuelve a iniciar. La carga de catálogo es opcional y no sobrescribe un inventario existente.
+El JSON de `warehouse/data/productos_demo.json` es solo un catálogo ficticio para la carga inicial opcional. Los cambios posteriores se guardan en `runtime/bodega.json`.
 
-## Copia de seguridad y actualización
+## Actualizar sin perder datos
 
-1. Detén el servidor con Ctrl+C y cierra cualquier editor de SQLite.
-2. Copia `db.sqlite3` a una carpeta de respaldo privada fuera del repositorio.
-3. Actualiza los archivos de código conservando `db.sqlite3` y `.local-secret`.
-4. Ejecuta `iniciar.bat`; las migraciones pendientes se aplican sobre la base existente.
+1. Detén el servidor con Ctrl+C.
+2. Respalda la carpeta `runtime` y el archivo `.local-secret` en una carpeta privada.
+3. Actualiza el código conservando ambos elementos.
+4. Ejecuta nuevamente `iniciar.bat`.
 
-GitHub y el ZIP contienen código, no respaldos de tus cuentas o inventario. No publiques copias de la base ni contraseñas.
+Una carpeta nueva del proyecto es una instalación independiente. Para trasladar tus datos a otro equipo, copia también `runtime` y `.local-secret` de forma privada. El ZIP y GitHub contienen código y documentación, no cuentas ni datos operativos.
 
-## Si no abre o no te deja entrar
+La antigua base SQLite se conservó como respaldo privado en el equipo original; esta versión no la abre ni la modifica. Los cambios se realizan desde los formularios del sistema.
 
-- **No se puede conectar:** ejecuta `iniciar.bat` y espera el mensaje de arranque. La dirección local funciona en ese equipo mientras el servidor esté abierto.
-- **Usuario o contraseña incorrectos:** revisa mayúsculas, espacios y símbolos.
-- **Acceso restringido:** Consulta tiene lectura; Operador puede modificar productos y stock; Administrador puede además archivar y gestionar usuarios.
-- **Puerto ocupado:** utiliza la instancia ya abierta o ciérrala antes de iniciar otra.
+## Si no abre o no puedes ingresar
+
+- **No se puede conectar:** inicia `iniciar.bat`, espera el mensaje del servidor y mantén la consola abierta.
+- **Usuario o contraseña incorrectos:** revisa espacios, mayúsculas y símbolos.
+- **Acceso restringido:** Consulta permite lectura; Operador administra productos y stock; Administrador gestiona además usuarios y archivo de productos.
+- **Puerto ocupado:** usa la instancia ya abierta o ciérrala antes de iniciar otra.
 - **Falta Python:** instala Python 3.12 y vuelve a ejecutar el iniciador.
 
-## Ejecutar manualmente
+## Ejecución manual
 
 Desde la carpeta del proyecto:
 
 ```powershell
 py -3 -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
-.\.venv\Scripts\python.exe manage.py migrate
 .\.venv\Scripts\python.exe manage.py preparar
-.\.venv\Scripts\python.exe manage.py runserver 127.0.0.1:8000
+.\.venv\Scripts\python.exe manage.py runserver 127.0.0.1:8000 --noreload
 ```
 
-Para cambiar una contraseña:
+No se ejecuta `migrate`: `DATABASES = {}` y los datos se gestionan como listas y diccionarios JSON.
 
-```powershell
-.\.venv\Scripts\python.exe manage.py changepassword "Pablo Doussang"
-```
-
-## Secciones y reglas
+## Secciones
 
 | Sección | Funciones |
 |---|---|
-| Resumen | Referencias activas, unidades, alertas, actividad y gráfica de 14 días |
+| Resumen | Referencias activas, unidades, alertas y actividad de 14 días |
 | Inventario | Alta, edición, búsqueda, filtros, archivo, reactivación y CSV |
 | Operaciones de stock | Entrada, salida con destino y ajuste por conteo físico |
 | Movimientos | Fecha, usuario, motivo, destino, variación y saldos |
-| Reportes | Períodos, gráficos, distribución por categoría y exportación |
+| Reportes | Períodos, gráficas, categorías y exportaciones |
 | Ubicaciones | Agrupación física y búsqueda de productos |
-| Usuarios y roles | Cuentas, roles, estado y contraseñas; solo administrador |
+| Usuarios y roles | Cuentas, permisos, estado y contraseñas |
 
-- Los productos nuevos empiezan con stock cero: registra una entrada para incorporar existencias.
-- Entrada/salida requiere un entero positivo; las salidas no pueden dejar saldo negativo.
-- Un ajuste indica la **cantidad final contada**. El motivo es obligatorio; una salida requiere destino.
-- Un producto al mínimo o por debajo genera una alerta.
-- Archivar requiere stock cero y conserva el historial.
-- Los movimientos no se editan: se corrigen mediante otro movimiento justificado.
-- Un mismo envío no se procesa dos veces. Stock e historial se confirman juntos en una transacción.
-- Los filtros de fecha afectan movimientos; las alertas y la distribución muestran existencias actuales.
+Los productos comienzan con stock cero. Entrada y salida requieren un entero positivo; el ajuste indica la cantidad final contada. El motivo es obligatorio y las salidas requieren destino. Se impiden saldos negativos y envíos duplicados. Archivar requiere stock cero y conserva el historial. Los movimientos se corrigen con una nueva operación justificada.
 
 ## Estructura
 
 ```text
-index.html                 Plantilla principal en la raíz
-iniciar.bat                Único iniciador, puerto 8000
-manage.py                  Administración de Django
-config/settings.py         Configuración de SQLite y sesiones
-warehouse/                 Modelos, formularios, vistas, servicios y pruebas
-warehouse/test_persistence.py  Verificación entre procesos y sesiones
-templates/                 Plantillas de las secciones
-static/                    CSS, Bootstrap y JavaScript locales
-docs/                      Diagramas, modelo de datos y rúbrica
-db.sqlite3                 Datos locales; no se distribuye
+index.html                    Plantilla principal, en la raíz
+iniciar.bat                   Único iniciador, puerto 8000
+config/settings.py            Configuración sin base de datos
+warehouse/views.py            Peticiones, listas, diccionarios y contextos
+warehouse/forms.py            Formularios y validaciones
+warehouse/store.py            Lectura y escritura persistente de JSON
+warehouse/middleware.py       Sesión y usuario sin consultas SQL
+warehouse/tests.py            Pruebas funcionales sin BD
+warehouse/test_persistence.py Prueba entre procesos independientes
+templates/                    Interfaces de todas las secciones
+static/                       CSS, Bootstrap y JavaScript locales
+docs/                         Diagramas, esquema y rúbrica
+runtime/bodega.json           Datos privados locales; no se distribuye
 ```
 
-## Verificación reproducible
+## Verificar
 
 ```powershell
+.\.venv\Scripts\python.exe manage.py check
 .\.venv\Scripts\python.exe manage.py test warehouse
 ```
 
-**20 pruebas aprobadas**: 19 de operaciones, validaciones, permisos y renderizado, y una prueba de persistencia en disco que usa tres procesos independientes. Comprueba creación y edición de administradores y productos, contraseña modificada, entrada/salida, recargas, cierre de sesión, nuevo navegador, reinicio y cambios confirmados directamente en la base. Las pruebas usan bases temporales y no modifican tus datos.
+Las pruebas usan archivos temporales, prohíben el acceso a base de datos y comprueban permisos, operaciones, validaciones, renderizado y persistencia entre procesos. No modifican tus datos locales. Consulta [la revisión](docs/REVISION_RUBRICA.md) para los resultados.
 
-## Documentación y entrega
+## Documentación
 
-- [Correspondencia con los indicadores](docs/RUBRICA.md)
-- [Revisión y correcciones](docs/REVISION_RUBRICA.md)
+- [Matriz de los diez indicadores](docs/RUBRICA.md)
+- [Revisión y evidencias](docs/REVISION_RUBRICA.md)
 - [Diagramas de flujo](docs/DIAGRAMAS.md)
-- [Modelo de datos](docs/MODELO_DATOS.md)
+- [Esquema de datos](docs/MODELO_DATOS.md)
 - [Instrucciones de GitHub](docs/GITHUB.md)
-- [Fuentes y decisiones](docs/FUENTES_Y_DECISIONES.md)
+- [Fuentes, decisiones y apoyo de IA](docs/FUENTES_Y_DECISIONES.md)
 
 ![Flujo general](docs/flujo-general.png)
 
-Esta versión conserva únicamente SQLite por petición del usuario. El documento original de U1 plantea un prototipo sin base de datos: esta decisión cambia ese alcance y no se presenta como cumplimiento literal de esa condición.
-
-Repositorio creado: [PabloDoussang/SoundStock](https://github.com/PabloDoussang/SoundStock). La publicación de los archivos requiere una subida verificada; disponer del enlace no demuestra por sí solo que el código esté cargado. GitHub almacena código y no ejecuta el servidor Django. El proyecto no incluye tienda, pagos, GPS ni API REST/JWT.
+Repositorio: [PabloDoussang/SoundStock](https://github.com/PabloDoussang/SoundStock). La publicación se documenta en la revisión cuando los archivos estén verificados en el remoto. GitHub almacena código; para abrir esta aplicación ejecuta el servidor Django. No se incluyen tienda, pagos, GPS ni API REST/JWT.

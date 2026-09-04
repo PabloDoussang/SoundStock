@@ -50,7 +50,7 @@ flowchart TD
   O --> B
 ```
 
-Los filtros GET no modifican la base. Fechas inválidas muestran errores y no devuelven resultados del período. Exportar movimientos con fechas inválidas responde HTTP 400. Cada sección conserva el menú para regresar al resumen o cambiar de sección.
+Los filtros GET no modifican los datos guardados. Fechas inválidas muestran errores y no devuelven resultados del período. Exportar movimientos con fechas inválidas responde HTTP 400. Cada sección conserva el menú para regresar al resumen o cambiar de sección.
 
 ## 2. Operación de stock
 
@@ -67,7 +67,7 @@ flowchart TD
   I --> J{"¿Formulario válido?"}
   J -- No --> K["Mostrar errores y conservar valores"]
   K --> F
-  J -- Sí --> L["Abrir transacción SQLite"]
+  J -- Sí --> L["Abrir escritura JSON protegida"]
   L --> M{"¿UUID ya registrado?"}
   M -- Sí --> N["Mismo usuario: devolver operación existente"]
   N --> Z["Mensaje y redirección al historial"]
@@ -84,12 +84,12 @@ flowchart TD
   T -- Sí --> V["Guardar movimiento con antes, después, variación, usuario y fecha"]
   V --> W["Actualizar stock del producto"]
   W --> X["Guardar cambios juntos"]
-  X --> Y["Recalcular alertas y reportes desde la base"]
+  X --> Y["Recalcular alertas y reportes desde JSON"]
   Y --> Z
   Z --> AA([Nueva operación o navegar])
 ```
 
-Si el producto deja de estar activo, se rechaza sin escribir. Un UUID ajeno se rechaza. SQLite agrupa las escrituras en una transacción. Si falla antes de confirmar, se conserva el estado anterior. Un bloqueo temporal de SQLite muestra un error y permite reintentar con el mismo identificador.
+Si el producto deja de estar activo, se rechaza sin escribir. Un UUID ajeno se rechaza. El almacén JSON agrupa las escrituras mediante archivo temporal y reemplazo atómico. Si falla antes de confirmar, se conserva el estado anterior. El prototipo usa un único proceso local y no consulta una base de datos.
 
 ## 3. Orden para dibujarlo en Draw.io
 
@@ -99,11 +99,11 @@ Si el producto deja de estar activo, se rechaza sin escribir. Un UUID ajeno se r
 4. Rectángulo: resumen, seguido de rombo de selección de sección.
 5. Una rama por sección según el primer diagrama.
 6. Para modificaciones: rombo de permiso → formulario → rombo de validación.
-7. Para stock: transacción → UUID → tipo → cálculo → validación de saldo → guardar historial y stock → confirmar.
-8. La persistencia se representa con un cilindro de base de datos SQLite. Conecta errores al formulario y operaciones exitosas al historial.
+7. Para stock: bloqueo de escritura → UUID → tipo → cálculo → validación de saldo → guardar historial y stock → confirmar.
+8. La persistencia se representa con un símbolo de archivo JSON. Conecta errores al formulario y operaciones exitosas al historial.
 9. Conecta cierre de sesión al ingreso.
-10. Usa cilindros para representar SQLite si quieres separar visualmente persistencia de procesos.
+10. Conecta el archivo JSON a las operaciones de lectura y guardado para representar persistencia.
 
 ## Persistencia al volver a abrir
 
-Guardar formulario válido → confirmar transacción en db.sqlite3 → mostrar éxito. Refrescar o cambiar de sección → consultar la misma base. Cerrar sesión → invalidar sesión y conservar datos. Reiniciar → abrir la misma base → ingresar y leer los últimos cambios confirmados. Una edición directa de SQLite requiere COMMIT o Guardar cambios en el editor.
+Guardar formulario válido → reemplazar runtime/bodega.json → mostrar éxito. Refrescar o cambiar de sección → leer el mismo archivo. Cerrar sesión → invalidar sesión y conservar datos. Reiniciar → abrir el mismo JSON → ingresar y leer los últimos cambios guardados.

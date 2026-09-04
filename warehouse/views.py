@@ -1,194 +1,245 @@
+"""Vistas U1: listas/diccionarios JSON, formularios y plantillas Django sin ORM."""
 import csv
+import uuid
 from datetime import timedelta
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required
-from django.contrib.auth.models import User, Group
-from django.contrib.auth import update_session_auth_hash
+from django.contrib.auth.hashers import check_password, make_password
 from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
-from django.db import transaction, IntegrityError, OperationalError
-from django.db.models import Q, F, Sum, Count
-from django.db.models.functions import TruncDate
-from django.http import HttpResponse
-from django.shortcuts import render, redirect, get_object_or_404
+from django.middleware.csrf import rotate_token
+from django.http import Http404, HttpResponse
+from django.shortcuts import render, redirect
 from django.utils import timezone
-from .models import Product, Movement
-from .forms import ProductForm, MovementForm, UserForm, ReportFilter
-from .services import record_movement
-from .access import operator_required, administrator_required, role
+from django.utils.http import url_has_allowed_host_and_scheme
+from django.views.decorators.http import require_POST
+from warehouse.access import login_required, operator_required, administrator_required, role
+from . import store
+from .forms import ProductForm, MovementForm, UserForm, LoginForm, ReportFilter, CATEGORIES, KINDS
 
-def page(request, template, **context):
-    return render(request, 'warehouse/' + template + '.html', context)
+def page(request,template,**context):
+    return render(request,'warehouse/'+template+'.html',context)
 
-def filtered_products(request):
-    products = Product.objects.filter(active=request.GET.get('archived') != '1')
-    q = request.GET.get('q','').strip()
-    if q: products = products.filter(Q(name__icontains=q)|Q(code__icontains=q)|Q(location__icontains=q))
-    category = request.GET.get('category','')
-    if category: products = products.filter(category=category)
-    if request.GET.get('status') == 'low': products = products.filter(stock__lte=F('minimum'))
-    if request.GET.get('status') == 'zero': products = products.filter(stock=0)
-    return products
+def fetch(rows,pk):
+    item=next((row for row in rows if row['id']==pk),None)
+    if item is None: raise Http404
+    return item
 
-def movement_query(request):
-    form = ReportFilter(request.GET)
-    rows = Movement.objects.select_related('product','user')
-    if form.is_valid():
-        if form.cleaned_data.get('start'): rows = rows.filter(created_at__date__gte=form.cleaned_data['start'])
-        if form.cleaned_data.get('end'): rows = rows.filter(created_at__date__lte=form.cleaned_data['end'])
-    else: rows = rows.none()
-    kind = request.GET.get('kind','')
-    if kind in dict(Movement.TYPES): rows = rows.filter(kind=kind)
-    q = request.GET.get('q','').strip()
-    if q: rows = rows.filter(Q(product__name__icontains=q)|Q(product__code__icontains=q)|Q(reason__icontains=q)|Q(destination__icontains=q))
-    return rows, form
+def filtered_products(request,products):
+    q=request.GET.get('q','').strip().casefold()
+    category=request.GET.get('category','')
+    state=request.GET.get('status','')
+    return [p for p in products if p.active==(request.GET.get('archived')!='1')
+        and (not q or q in f'{p.name} {p.code} {p.location}'.casefold())
+        and (not category or p.category==category)
+        and (state!='low' or p.stock<=p.minimum) and (state!='zero' or p.stock==0)]
+
+def movement_query(request,rows):
+    form=ReportFilter(request.GET)
+    if not form.is_valid(): return [],form
+    start,end=form.cleaned_data.get('start'),form.cleaned_data.get('end')
+    q=request.GET.get('q','').strip().casefold()
+    kind=request.GET.get('kind','')
+    result=[]
+    for m in rows:
+        day=timezone.localtime(m.created_at).date()
+        if start and day<start or end and day>end: continue
+        if kind in dict(KINDS) and m.kind!=kind: continue
+        if q and q not in f'{m.product.name} {m.product.code} {m.reason} {m.destination}'.casefold(): continue
+        result.append(m)
+    return result,form
 
 def chart_data(rows):
-    grouped = list(rows.order_by().annotate(day=TruncDate('created_at')).values('day','kind').annotate(total=Sum('delta')).order_by('day'))
-    dates = sorted(set(str(r['day']) for r in grouped))
-    chart = [{'date':date,'entrada':0,'salida':0,'ajuste':0} for date in dates]
-    mapping = {item['date']:item for item in chart}
-    for row in grouped: mapping[str(row['day'])][row['kind']] = abs(row['total']) if row['kind'] != 'ajuste' else row['total']
-    return chart
+    days={}
+    for m in rows:
+        day=timezone.localtime(m.created_at).date().isoformat()
+        days.setdefault(day,dict(date=day,entrada=0,salida=0,ajuste=0))
+        days[day][m.kind]+=abs(m.delta) if m.kind=='salida' else m.delta
+    return [days[key] for key in sorted(days)]
+
+def login(request):
+    if request.user.is_authenticated: return redirect('dashboard')
+    form=LoginForm(request.POST or None)
+    if request.method=='POST' and form.is_valid():
+        u=next((u for u in store.read()['users'] if u['username']==form.cleaned_data['username'] and u['is_active']),None)
+        if u and check_password(form.cleaned_data['password'],u['password']):
+            request.session.cycle_key()
+            rotate_token(request)
+            request.session['u1_user']=u['id']
+            request.session['u1_version']=u['session_version']
+            target=request.POST.get('next','/')
+            if not url_has_allowed_host_and_scheme(target,{request.get_host()},require_https=request.is_secure()): target='/'
+            return redirect(target or '/')
+        form.add_error(None,'Usuario o contraseña incorrectos, o cuenta inactiva.')
+    if not store.read()['users']:
+        messages.warning(request,'Prepara la cuenta inicial ejecutando iniciar.bat.')
+    return render(request,'registration/login.html',{'form':form,'next':request.GET.get('next','/')})
+
+@require_POST
+def logout(request):
+    if request.user.is_authenticated:
+        with store.edit() as data:
+            fetch(data['users'],request.user.pk)['session_version']=str(uuid.uuid4())
+    request.session.flush()
+    return redirect('login')
 
 @login_required
 def dashboard(request):
-    products = Product.objects.filter(active=True)
-    today = timezone.localdate()
-    rows = Movement.objects.filter(created_at__date__gte=today-timedelta(days=13))
-    return page(request,'dashboard',title='Resumen de bodega',section='dashboard',
-        product_count=products.count(),unit_count=products.aggregate(n=Sum('stock'))['n'] or 0,
-        low_count=products.filter(stock__lte=F('minimum')).count(),
-        today_count=Movement.objects.filter(created_at__date=today).count(),
-        low_products=products.filter(stock__lte=F('minimum')).order_by('stock','name')[:5],
-        recent=Movement.objects.select_related('product','user')[:5],chart=chart_data(rows),today=today)
+    _,products,rows=store.objects(store.read())
+    products=[p for p in products if p.active]
+    today=timezone.localdate()
+    low=sorted([p for p in products if p.stock<=p.minimum],key=lambda p:(p.stock,p.name))
+    recent=[m for m in rows if today-timedelta(days=13)<=timezone.localtime(m.created_at).date()<=today]
+    return page(request,'dashboard',title='Resumen de bodega',section='dashboard',product_count=len(products),
+        unit_count=sum(p.stock for p in products),low_count=len(low),low_products=low[:5],recent=rows[:5],today=today,
+        today_count=sum(timezone.localtime(m.created_at).date()==today for m in rows),chart=chart_data(recent))
 
 @login_required
 def products(request):
-    items = filtered_products(request)
-    return page(request,'products',title='Inventario',section='products',items=Paginator(items,12).get_page(request.GET.get('page')),count=items.count(),categories=Product.CATEGORY)
+    _,products,_=store.objects(store.read())
+    items=filtered_products(request,products)
+    return page(request,'products',title='Inventario',section='products',items=Paginator(items,12).get_page(request.GET.get('page')),count=len(items),categories=CATEGORIES)
 
 @operator_required
-def product_edit(request, pk=None):
-    product = get_object_or_404(Product,pk=pk,active=True) if pk else None
-    form = ProductForm(request.POST or None,instance=product)
-    if request.method == 'POST' and form.is_valid():
+def product_edit(request,pk=None):
+    existing=fetch(store.read()['products'],pk) if pk else None
+    if existing and not existing['active']: raise Http404
+    form=ProductForm(request.POST or None,initial=existing)
+    if request.method=='POST' and form.is_valid():
         try:
-            with transaction.atomic():
-                if product:
-                    locked = Product.objects.select_for_update().get(pk=pk,active=True)
-                    for key in form.Meta.fields: setattr(locked,key,form.cleaned_data[key])
-                    locked.save(update_fields=form.Meta.fields+['updated_at'])
-                else: form.save()
-            messages.success(request,'Producto guardado. Registra una entrada para incorporar existencias.' if not product else 'Datos del producto actualizados.')
+            with store.edit() as data:
+                values=form.cleaned_data
+                if any(p['code']==values['code'] and p['id']!=pk for p in data['products']):
+                    raise ValidationError('Este código ya existe, incluso si está archivado.')
+                if pk:
+                    p=fetch(data['products'],pk)
+                    if not p['active']: raise ValidationError('El producto ya no está activo.')
+                    p.update(values)
+                else: data['products'].append(dict(values,id=store.next_id(data['products']),stock=0,active=True))
+            messages.success(request,'Producto guardado. Registra existencias desde Operaciones de stock.')
             return redirect('products')
-        except (IntegrityError,Product.DoesNotExist):
-            form.add_error(None,'El producto cambió o el código ya está registrado. Recarga e intenta nuevamente.')
-    return page(request,'form',title='Editar producto' if product else 'Nuevo producto',section='products',form=form,back='products',hint='El stock se modifica desde Operaciones de stock para conservar la trazabilidad.',submit='Guardar producto')
+        except ValidationError as error: form.add_error(None,error)
+    return page(request,'form',title='Editar producto' if pk else 'Nuevo producto',section='products',form=form,back='products',hint='El stock se modifica desde Operaciones de stock para conservar el historial.',submit='Guardar producto')
 
 @administrator_required
-def product_archive(request, pk):
-    product = get_object_or_404(Product,pk=pk)
-    if request.method == 'POST':
-        with transaction.atomic():
-            product = Product.objects.select_for_update().get(pk=pk)
-            if product.active and product.stock != 0:
+def product_archive(request,pk):
+    _,products,_=store.objects(store.read())
+    p=next((p for p in products if p.pk==pk),None)
+    if p is None: raise Http404
+    if request.method=='POST':
+        with store.edit() as data:
+            row=fetch(data['products'],pk)
+            if row['active'] and row['stock']:
                 messages.error(request,'Para archivar el producto, registra primero la salida o el ajuste de sus existencias.')
             else:
-                product.active = not product.active
-                product.save(update_fields=['active','updated_at'])
-                messages.success(request,'Producto reactivado.' if product.active else 'Producto archivado; se conserva todo su historial.')
+                row['active']=not row['active']
+                messages.success(request,'Producto reactivado.' if row['active'] else 'Producto archivado; se conserva todo su historial.')
         return redirect('products')
-    return page(request,'confirm',title='Archivar producto' if product.active else 'Reactivar producto',section='products',product=product,back='products')
+    return page(request,'confirm',title='Archivar producto' if p.active else 'Reactivar producto',section='products',product=p,back='products')
 
 @operator_required
 def movement_new(request):
-    initial = {'kind':request.GET.get('kind','entrada')}
-    if request.GET.get('product','').isdigit(): initial['product'] = request.GET['product']
-    form = MovementForm(request.POST or None,initial=initial)
-    if request.method == 'POST' and form.is_valid():
-        data = form.cleaned_data
+    _,products,_=store.objects(store.read())
+    form=MovementForm(request.POST or None,products=products,initial={'product':request.GET.get('product'),'kind':request.GET.get('kind','entrada')})
+    if request.method=='POST' and form.is_valid():
         try:
-            movement, created = record_movement(product_id=data['product'].pk,kind=data['kind'],quantity=data['quantity'],reason=data['reason'],destination=data['destination'],user=request.user,token=data['token'])
-            messages.success(request,f'MOV-{movement.pk:05d} registrado. Stock resultante: {movement.after} unidades.' if created else 'Esta operación ya estaba registrada. No se duplicó el stock.')
+            values=form.cleaned_data
+            with store.edit() as data:
+                existing=next((m for m in data['movements'] if m['token']==str(values['token'])),None)
+                if existing:
+                    if existing['user']!=request.user.pk: raise ValidationError('Identificador de operación inválido.')
+                    messages.info(request,'Esta operación ya estaba registrada. No se duplicó el stock.')
+                else:
+                    p=fetch(data['products'],values['product'])
+                    if not p['active']: raise ValidationError('El producto ya no está activo.')
+                    before=p['stock'];kind=values['kind'];quantity=values['quantity']
+                    after=quantity if kind=='ajuste' else before+(quantity if kind=='entrada' else -quantity)
+                    if after<0: raise ValidationError(f'Stock insuficiente: hay {before} unidades disponibles.')
+                    if after>1000000: raise ValidationError('El stock supera el máximo permitido de 1.000.000.')
+                    if after==before: raise ValidationError('El ajuste no modifica las existencias.')
+                    mid=store.next_id(data['movements'])
+                    data['movements'].append(dict(id=mid,product=p['id'],kind=kind,delta=after-before,before=before,after=after,
+                        reason=values['reason'],destination=values['destination'],user=request.user.pk,created_at=timezone.now().isoformat(),token=str(values['token'])))
+                    p['stock']=after
+                    messages.success(request,f'MOV-{mid:05d} registrado. Stock resultante: {after} unidades.')
             return redirect('movements')
         except ValidationError as error: form.add_error(None,error)
-        except Product.DoesNotExist: form.add_error('product','El producto ya no está activo.')
-        except OperationalError: form.add_error(None,'La base de datos está ocupada. Intenta guardar nuevamente.')
-    stock_data = list(Product.objects.filter(active=True).values('id','stock','minimum','location'))
-    return page(request,'stock_form',title='Operaciones de stock',section='movement_new',form=form,stock_data=stock_data)
+    return page(request,'stock_form',title='Operaciones de stock',section='movement_new',form=form,
+        stock_data=[dict(id=p.id,stock=p.stock,minimum=p.minimum,location=p.location) for p in products if p.active])
 
 @login_required
 def movements(request):
-    rows, form = movement_query(request)
-    return page(request,'movements',title='Movimientos',section='movements',items=Paginator(rows,15).get_page(request.GET.get('page')),filter_form=form,kinds=Movement.TYPES,count=rows.count())
+    _,_,rows=store.objects(store.read())
+    rows,form=movement_query(request,rows)
+    return page(request,'movements',title='Movimientos',section='movements',items=Paginator(rows,15).get_page(request.GET.get('page')),count=len(rows),filter_form=form,kinds=KINDS)
 
 @login_required
 def reports(request):
-    rows, form = movement_query(request)
-    products = Product.objects.filter(active=True)
-    categories = list(products.order_by().values('category').annotate(total=Sum('stock'),products=Count('id')).order_by('-total'))
-    return page(request,'reports',title='Reportes de inventario',section='reports',filter_form=form,chart=chart_data(rows),categories=categories,
-        entries=rows.filter(kind='entrada').aggregate(n=Sum('delta'))['n'] or 0,
-        exits=abs(rows.filter(kind='salida').aggregate(n=Sum('delta'))['n'] or 0),
-        adjustments=rows.filter(kind='ajuste').aggregate(n=Sum('delta'))['n'] or 0,
-        low=products.filter(stock__lte=F('minimum')).count(),count=rows.count())
+    _,products,rows=store.objects(store.read())
+    rows,form=movement_query(request,rows)
+    products=[p for p in products if p.active]
+    cats={}
+    for p in products:
+        cats.setdefault(p.category,dict(category=p.category,total=0,products=0))
+        cats[p.category]['total']+=p.stock;cats[p.category]['products']+=1
+    return page(request,'reports',title='Reportes de inventario',section='reports',filter_form=form,chart=chart_data(rows),
+        categories=sorted(cats.values(),key=lambda c:c['total'],reverse=True),count=len(rows),
+        entries=sum(m.delta for m in rows if m.kind=='entrada'),exits=-sum(m.delta for m in rows if m.kind=='salida'),
+        adjustments=sum(m.delta for m in rows if m.kind=='ajuste'),low=sum(p.stock<=p.minimum for p in products))
 
 @login_required
 def locations(request):
-    products = Product.objects.filter(active=True)
-    q = request.GET.get('q','').strip()
-    if q: products = products.filter(Q(location__icontains=q)|Q(name__icontains=q)|Q(code__icontains=q))
-    groups = {}
-    for product in products.order_by('location','name'):
-        groups.setdefault(product.location,{'name':product.location,'products':[],'stock':0})
-        groups[product.location]['products'].append(product)
-        groups[product.location]['stock'] += product.stock
+    _,products,_=store.objects(store.read())
+    q=request.GET.get('q','').strip().casefold();groups={}
+    for p in sorted(products,key=lambda p:(p.location,p.name)):
+        if not p.active or (q and q not in f'{p.location} {p.name} {p.code}'.casefold()): continue
+        groups.setdefault(p.location,dict(name=p.location,products=[],stock=0))
+        groups[p.location]['products'].append(p);groups[p.location]['stock']+=p.stock
     return page(request,'locations',title='Ubicaciones',section='locations',locations=groups.values())
 
-def safe_csv(value):
-    value = str(value)
-    return "'" + value if value.lstrip().startswith(('=','+','-','@')) else value
-
 @login_required
-def export(request, kind):
-    response = HttpResponse(content_type='text/csv; charset=utf-8')
-    response['Content-Disposition'] = f'attachment; filename="music-pro-{kind}.csv"'
-    response.write('\ufeff')
-    writer = csv.writer(response,delimiter=';')
-    if kind == 'inventario':
+def export(request,kind):
+    _,products,rows=store.objects(store.read())
+    response=HttpResponse(content_type='text/csv; charset=utf-8')
+    response['Content-Disposition']=f'attachment; filename="music-pro-{kind}.csv"'
+    response.write('\ufeff');writer=csv.writer(response,delimiter=';')
+    if kind=='inventario':
         writer.writerow(['SKU','Producto','Categoría','Ubicación','Stock','Mínimo','Estado'])
-        for p in filtered_products(request): writer.writerow([safe_csv(x) for x in [p.code,p.name,p.category,p.location,p.stock,p.minimum,p.status]])
-    elif kind == 'movimientos':
-        rows, form = movement_query(request)
+        values=[[p.code,p.name,p.category,p.location,p.stock,p.minimum,p.status] for p in filtered_products(request,products)]
+    elif kind=='movimientos':
+        rows,form=movement_query(request,rows)
         if not form.is_valid(): return HttpResponse('Rango de fechas inválido.',status=400)
         writer.writerow(['Movimiento','Fecha','SKU','Producto','Tipo','Variación','Anterior','Resultante','Responsable','Destino','Motivo'])
-        for m in rows: writer.writerow([safe_csv(x) for x in [m.pk,timezone.localtime(m.created_at).isoformat(),m.product.code,m.product.name,m.get_kind_display(),m.delta,m.before,m.after,m.user.username,m.destination,m.reason]])
-    else: return HttpResponse(status=404)
+        values=[[m.pk,timezone.localtime(m.created_at).isoformat(),m.product.code,m.product.name,m.get_kind_display(),m.delta,m.before,m.after,m.user.username,m.destination,m.reason] for m in rows]
+    else: raise Http404
+    for row in values:
+        writer.writerow([("'"+str(v)) if isinstance(v,str) and v.lstrip().startswith(('=','+','-','@')) else v for v in row])
     return response
 
 @administrator_required
 def users(request):
-    return page(request,'users',title='Usuarios y roles',section='users',users=[{'account':u,'role':role(u)} for u in User.objects.prefetch_related('groups').order_by('username')])
+    accounts,_,_=store.objects(store.read())
+    return page(request,'users',title='Usuarios y roles',section='users',users=[{'account':u,'role':u.role} for u in sorted(accounts.values(),key=lambda u:u.username)])
 
 @administrator_required
-def user_edit(request, pk=None):
-    account = get_object_or_404(User,pk=pk) if pk else None
-    form = UserForm(request.POST or None,instance=account,initial={'role':role(account) if account else 'Consulta'})
-    if request.method == 'POST' and form.is_valid():
-        data = form.cleaned_data
-        if account and account.pk == request.user.pk and (not data['is_active'] or data['role'] != 'Administrador'):
-            form.add_error(None,'No puedes desactivar ni quitar el rol administrador de tu propia cuenta.')
-        else:
-            with transaction.atomic():
-                user = form.save(commit=False)
-                user.is_superuser = data['role'] == 'Administrador'
-                user.is_staff = user.is_superuser
-                if data['password']: user.set_password(data['password'])
-                user.save()
-                user.groups.clear()
-                if not user.is_superuser: user.groups.add(Group.objects.get_or_create(name=data['role'])[0])
-            if user.pk == request.user.pk: update_session_auth_hash(request,user)
+def user_edit(request,pk=None):
+    existing=fetch(store.read()['users'],pk) if pk else None
+    initial={k:v for k,v in existing.items() if k!='password'} if existing else None
+    form=UserForm(request.POST or None,initial=initial)
+    if request.method=='POST' and form.is_valid():
+        try:
+            values=form.cleaned_data.copy();password=values.pop('password')
+            if not pk and not password: raise ValidationError('Define una contraseña para la nueva cuenta.')
+            if pk==request.user.pk and (not values['is_active'] or values['role']!='Administrador'):
+                raise ValidationError('No puedes desactivar ni quitar el rol administrador de tu propia cuenta.')
+            with store.edit() as data:
+                if any(u['username']==values['username'] and u['id']!=pk for u in data['users']): raise ValidationError('Ya existe una cuenta con este nombre de usuario.')
+                row=fetch(data['users'],pk) if pk else dict(id=store.next_id(data['users']),session_version=str(uuid.uuid4()))
+                row.update(values)
+                if password:
+                    row['password']=make_password(password);row['session_version']=str(uuid.uuid4())
+                if not pk: data['users'].append(row)
+                if pk==request.user.pk: request.session['u1_version']=row['session_version']
             messages.success(request,'Usuario guardado.')
             return redirect('users')
-    return page(request,'form',title='Editar usuario' if account else 'Nuevo usuario',section='users',form=form,back='users',hint='Consulta: lectura. Operador: productos y stock. Administrador: acceso completo.',submit='Guardar usuario')
+        except ValidationError as error: form.add_error(None,error)
+    return page(request,'form',title='Editar usuario' if pk else 'Nuevo usuario',section='users',form=form,back='users',hint='Consulta: lectura. Operador: productos y stock. Administrador: acceso completo.',submit='Guardar usuario')

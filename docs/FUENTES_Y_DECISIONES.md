@@ -18,7 +18,7 @@ Los intentos de acceso y búsqueda no devolvieron su contenido ni transcripcione
 ## Decisiones de implementación
 
 - Django con vistas funcionales y plantillas del servidor porque la rúbrica lo exige.
-- SQLite por la petición explícita de persistencia; conserva la posibilidad de recrear datos ficticios desde JSON.
+- JSON persistente para cumplir U1 sin conexión a base de datos y conservar las operaciones entre reinicios.
 - Bootstrap local y CSS propio para una interfaz ordenada que no requiera internet al usarla.
 - Gráficas SVG dibujadas desde JSON del servidor, sin dependencias de servicios externos.
 - Archivo lógico de productos y movimientos inmutables para preservar trazabilidad.
@@ -29,18 +29,18 @@ Los intentos de acceso y búsqueda no devolvieron su contenido ni transcripcione
 
 La IA ayudó a extraer requisitos, modelar Product/Movement, generar formularios y plantillas, diseñar la interfaz, preparar diagramas y redactar pruebas. Se detectaron y corrigieron una expresión de estadísticas con paréntesis incompleto y un enlace de paginación con prefijo duplicado. Se verificaron rutas, protección de permisos, stock insuficiente, duplicados, rollback, fechas, CRUD y renderizado HTML con pruebas Django.
 
-El diseño evita confiar en el cálculo del navegador: la vista previa de stock solo orienta; el servidor recalcula dentro de la transacción. En SQLite se usa IMMEDIATE porque select_for_update no basta para bloquear filas.
+El diseño evita confiar en el cálculo del navegador: la vista previa de stock solo orienta; el servidor recalcula bajo el bloqueo de escritura JSON. Solo reemplaza el archivo cuando termina la validación.
 
-Revisa especialmente models.py → forms.py → services.py → views.py → templates. Debes poder explicar el cálculo after/before/delta y cómo un contexto llega a una plantilla.
+Revisa especialmente store.py → forms.py → views.py → templates. Debes poder explicar el cálculo after/before/delta y cómo un contexto llega a una plantilla.
 
 ## Documentación técnica consultada
 
-- [Transacciones de Django](https://docs.djangoproject.com/en/5.2/topics/db/transactions/)
+- [Formularios de Django](https://docs.djangoproject.com/en/5.2/topics/forms/)
 - [Bootstrap: introducción](https://getbootstrap.com/docs/5.3/getting-started/introduction/)
 - [GitHub: agregar código local](https://docs.github.com/en/migrations/importing-source-code/using-the-command-line-to-import-source-code/adding-locally-hosted-code-to-github)
 
 Bootstrap 5.3.8 conserva su encabezado de licencia MIT en static/vendor/bootstrap.min.css.
 
-## Alcance final solicitado
+## Alcance final corregido
 
-El usuario solicitó eliminar la opción sin base de datos y conservar únicamente SQLite. Esta decisión prevalece sobre el alcance sin BD del PDF U1 y queda explícita en la matriz. El JSON de catálogo restante contiene solo productos ficticios para carga inicial opcional; no almacena usuarios ni operaciones. Se añadieron pruebas de persistencia entre procesos, sesiones y modificaciones directas de la base.
+Se corrigió la incompatibilidad entre SQLite y el alcance U1. La entrega utiliza una única versión JSON sin base de datos y conserva los datos entre reinicios. El código de SQLite se retiró de la versión activa; la base anterior se preservó como respaldo privado. La persistencia y las reglas se verifican con archivos temporales, sin consultar SQL.

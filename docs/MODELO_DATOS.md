@@ -1,50 +1,53 @@
-# Modelo de datos · SQLite
+# Esquema de datos · JSON sin base de datos
 
-Todos los datos operativos y cuentas se guardan en `db.sqlite3`, en la raíz del proyecto. Las sesiones se almacenan en `django_session`. Refrescar, cerrar sesión y reiniciar no eliminan los registros.
+`runtime/bodega.json` contiene tres listas: `products`, `movements` y `users`. `warehouse/store.py` convierte sus diccionarios en objetos de lectura para las plantillas. El archivo de catálogo demo sirve solo para la preparación inicial opcional.
 
-## Product
+## products
 
-| Atributo | Tipo Django / SQLite | Regla |
+| Atributo | Tipo JSON | Regla |
 |---|---|---|
-| id | BigAutoField / INTEGER | Clave primaria |
-| code | CharField(30) / VARCHAR | Único, 3–30 caracteres A–Z, 0–9 y guion; normalizado en formulario |
-| name | CharField(120) / VARCHAR | Obligatorio |
-| category | CharField(30) / VARCHAR | Cuerdas, Percusión, Teclados, Audio, DJ o Accesorios |
-| location | CharField(60) / VARCHAR | Obligatorio; ubicación física, p. ej. A-01-02 |
-| stock | PositiveIntegerField / INTEGER | No editable en ProductForm; restricción SQL >= 0 |
-| minimum | PositiveIntegerField / INTEGER | Umbral de alerta; 0–1.000.000 en formulario |
-| active | BooleanField / BOOLEAN | Archivo lógico |
-| updated_at | DateTimeField / DATETIME | Última modificación |
+| id | entero | Identificador único |
+| code | texto | SKU único, normalizado, 3–30 caracteres A–Z, 0–9 y guion |
+| name | texto | Obligatorio, máximo 120 caracteres |
+| category | texto | Cuerdas, Percusión, Teclados, Audio, DJ o Accesorios |
+| location | texto | Ubicación física obligatoria, máximo 60 caracteres |
+| stock | entero | Entre 0 y 1.000.000; cambia mediante operaciones |
+| minimum | entero | Entre 0 y 1.000.000; umbral de alerta |
+| active | booleano | Archivo lógico sin perder historial |
 
-Stock máximo de 1.000.000 unidades aplicado por el servicio. Las ubicaciones son etiquetas libres; el sistema no calcula capacidad física ni cubicaje.
+## movements
 
-## Movement
-
-| Atributo | Tipo | Regla |
+| Atributo | Tipo JSON | Regla |
 |---|---|---|
-| id | BigAutoField | Clave primaria; se muestra como MOV-00001 |
-| product | ForeignKey(Product) | PROTECT: conserva la referencia histórica |
-| kind | CharField(10) | entrada, salida, ajuste |
-| delta | IntegerField | after - before; puede ser negativo |
-| before | PositiveIntegerField | Saldo previo |
-| after | PositiveIntegerField | Saldo final |
-| reason | CharField(240) | Motivo obligatorio |
-| destination | CharField(120) | Obligatorio en salida desde formulario/servicio |
-| user | ForeignKey(User) | Responsable; PROTECT |
-| created_at | DateTimeField | Fecha/hora asignada por servidor |
-| token | UUIDField(unique=True) | Evita duplicar el mismo envío |
+| id | entero | Identificador mostrado como MOV-00001 |
+| product | entero | Identificador de producto existente |
+| user | entero | Identificador del usuario responsable |
+| kind | texto | entrada, salida o ajuste |
+| before / after | enteros | Saldo previo y resultante, no negativos |
+| delta | entero | after menos before |
+| reason | texto | Motivo obligatorio, máximo 240 caracteres |
+| destination | texto | Obligatorio para salida |
+| created_at | texto ISO 8601 | Fecha con zona horaria |
+| token | texto UUID | Identifica un envío y evita duplicarlo |
 
-Los nombres/códigos se consultan desde el producto relacionado: editar metadatos del producto actualiza cómo se identifica en el historial. Los valores de stock, motivo, destino, responsable y fecha del movimiento no se editan.
+Los movimientos conservan valores, responsable y fecha. Los nombres del producto y usuario se consultan desde sus registros actuales. Los productos con historial se archivan; no se borran físicamente.
 
-## User y Group
+## users
 
-Se usan los modelos estándar de Django: nombre de usuario único, contraseña con hash, nombres, correo, is_active, is_staff e is_superuser. Un superusuario tiene rol Administrador; el grupo Operador habilita escritura operativa; el resto usa Consulta. User y Group tienen relación muchos a muchos mediante auth_user_groups.
+| Atributo | Tipo JSON | Regla |
+|---|---|---|
+| id | entero | Identificador único |
+| username | texto | Único, máximo 150 caracteres, admite espacios |
+| first_name / last_name / email | texto | Datos de la cuenta |
+| password | texto | Hash generado por Django; nunca contraseña en texto plano |
+| is_active | booleano | Habilita o deshabilita ingreso |
+| role | texto | Administrador, Operador o Consulta |
+| session_version | texto UUID | Permite invalidar sesiones al salir o cambiar contraseña |
 
 ```mermaid
 erDiagram
     PRODUCT ||--o{ MOVEMENT : registra
     USER ||--o{ MOVEMENT : realiza
-    USER }o--o{ GROUP : pertenece
     PRODUCT {
         integer id PK
         string code UK
@@ -54,42 +57,32 @@ erDiagram
         integer stock
         integer minimum
         boolean active
-        datetime updated_at
     }
     MOVEMENT {
         integer id PK
-        integer product_id FK
-        integer user_id FK
+        integer product FK
+        integer user FK
         string kind
-        integer delta
         integer before
         integer after
-        string reason
-        string destination
-        datetime created_at
-        uuid token UK
+        integer delta
+        string created_at
+        string token UK
     }
     USER {
         integer id PK
         string username UK
         string password_hash
+        string role
         boolean is_active
-        boolean is_superuser
-    }
-    GROUP {
-        integer id PK
-        string name UK
+        string session_version
     }
 ```
 
-## Operaciones y validaciones
+Este diagrama representa relaciones lógicas entre diccionarios, no tablas SQL. Las validaciones se ejecutan en Python. Se usan identificadores para enlazar los registros.
 
-1. GET obtiene datos por ORM y construye un diccionario de contexto.
-2. La plantilla muestra datos escapados con bucles, condiciones y filtros.
-3. POST requiere sesión, permiso y token CSRF; los forms validan tipos, longitudes y reglas.
-4. record_movement abre una transacción; comprueba si el token ya fue registrado.
-5. Lee el producto activo y su saldo actual; calcula y valida el saldo nuevo.
-6. Crea Movement y actualiza Product dentro de la misma transacción. Un error revierte ambos.
-7. La vista añade un mensaje y redirige al historial: patrón POST/Redirect/GET.
+## Lectura y escritura
 
-Con SQLite, transaction_mode=IMMEDIATE protege frente a escritores simultáneos mediante reserva del bloqueo de escritura. El esquema ORM facilita migrar a PostgreSQL, donde select_for_update sí toma bloqueo de filas; esa migración no fue realizada ni probada.
+GET lee JSON y construye contextos; POST valida permiso, CSRF y formulario. Una modificación trabaja sobre una copia en memoria bajo un bloqueo de hilos y solo reemplaza el archivo después de completar la validación. El guardado sincroniza el archivo temporal antes del reemplazo. Historial y stock se guardan juntos.
+
+El prototipo se ejecuta con un único proceso local. Los cambios confirmados permanecen al refrescar, salir, cerrar el navegador y reiniciar. Conserva runtime/bodega.json al actualizar el código.
