@@ -1,0 +1,98 @@
+[
+  {
+    "code": "MP-GTR-001",
+    "name": "Guitarra eléctrica Stratocaster",
+    "category": "Cuerdas",
+    "location": "A-01-01",
+    "stock": 28,
+    "minimum": 8
+  },
+  {
+    "code": "MP-GTR-002",
+    "name": "Guitarra acústica F310",
+    "category": "Cuerdas",
+    "location": "A-01-02",
+    "stock": 17,
+    "minimum": 6
+  },
+  {
+    "code": "MP-BAS-003",
+    "name": "Bajo eléctrico Jazz Bass",
+    "category": "Cuerdas",
+    "location": "A-02-01",
+    "stock": 4,
+    "minimum": 5
+  },
+  {
+    "code": "MP-UKL-004",
+    "name": "Ukelele soprano",
+    "category": "Cuerdas",
+    "location": "A-02-02",
+    "stock": 36,
+    "minimum": 10
+  },
+  {
+    "code": "MP-DRM-005",
+    "name": "Batería electrónica Nitro",
+    "category": "Percusión",
+    "location": "B-01-01",
+    "stock": 3,
+    "minimum": 4
+  },
+  {
+    "code": "MP-KEY-006",
+    "name": "Teclado portátil PSR",
+    "category": "Teclados",
+    "location": "B-02-01",
+    "stock": 12,
+    "minimum": 4
+  },
+  {
+    "code": "MP-MIC-007",
+    "name": "Micrófono dinámico SM58",
+    "category": "Audio",
+    "location": "C-01-01",
+    "stock": 42,
+    "minimum": 10
+  },
+  {
+    "code": "MP-AUD-008",
+    "name": "Interfaz de audio 2i2",
+    "category": "Audio",
+    "location": "C-01-02",
+    "stock": 6,
+    "minimum": 8
+  },
+  {
+    "code": "MP-SPK-009",
+    "name": "Monitor de estudio 5 pulgadas",
+    "category": "Audio",
+    "location": "C-02-01",
+    "stock": 18,
+    "minimum": 6
+  },
+  {
+    "code": "MP-DJC-010",
+    "name": "Controlador DJ de 2 canales",
+    "category": "DJ",
+    "location": "D-01-01",
+    "stock": 0,
+    "minimum": 3
+  },
+  {
+    "code": "MP-CBL-011",
+    "name": "Cable de instrumento 3 metros",
+    "category": "Accesorios",
+    "location": "E-01-01",
+    "stock": 85,
+    "minimum": 20
+  },
+  {
+    "code": "MP-STR-012",
+    "name": "Set de cuerdas calibre 010",
+    "category": "Accesorios",
+    "location": "E-01-02",
+    "stock": 64,
+    "minimum": 15
+  }
+]
