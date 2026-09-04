@@ -11,7 +11,10 @@ flowchart TD
   C -- No --> D["Mostrar error sin abrir sesión"]
   D --> B
   C -- Sí --> E["Crear sesión y determinar rol"]
-  E --> F["Resumen /"]
+  E --> E1{"¿Hay un destino next interno válido?"}
+  E1 -- Sí --> E2["Volver a la ruta solicitada; verificar su permiso"]
+  E1 -- No --> F["Resumen /"]
+  E2 --> G
   F --> G{"Seleccionar sección"}
   G --> H["Inventario /inventario/"]
   G --> I["Stock /stock/ · Operador o Administrador"]
@@ -47,7 +50,8 @@ flowchart TD
   M2 -- Sí --> M3["Guardar usuario; contraseña con hash"]
   M3 --> M
   G --> O["Cerrar sesión · POST /salir/"]
-  O --> B
+  O --> O1["Invalidar todas las sesiones de la cuenta; conservar los datos"]
+  O1 --> B
 ```
 
 Los filtros GET no modifican los datos guardados. Fechas inválidas muestran errores y no devuelven resultados del período. Exportar movimientos con fechas inválidas responde HTTP 400. Cada sección conserva el menú para regresar al resumen o cambiar de sección.
@@ -69,7 +73,10 @@ flowchart TD
   K --> F
   J -- Sí --> L["Abrir escritura JSON protegida"]
   L --> M{"¿UUID ya registrado?"}
-  M -- Sí --> N["Mismo usuario: devolver operación existente"]
+  M -- Sí --> M1{"¿El UUID pertenece al mismo usuario?"}
+  M1 -- No --> M2["Rechazar identificador; conservar estado anterior"]
+  M2 --> K
+  M1 -- Sí --> N["No repetir el movimiento ni modificar stock"]
   N --> Z["Mensaje y redirección al historial"]
   M -- No --> O["Leer producto activo y stock actual"]
   O --> P{"Tipo"}
@@ -84,26 +91,30 @@ flowchart TD
   T -- Sí --> V["Guardar movimiento con antes, después, variación, usuario y fecha"]
   V --> W["Actualizar stock del producto"]
   W --> X["Guardar cambios juntos"]
-  X --> Y["Recalcular alertas y reportes desde JSON"]
-  Y --> Z
+  X --> Z
   Z --> AA([Nueva operación o navegar])
+  AA --> AB["Al abrir Resumen o Reportes: leer JSON y calcular los datos de esa sección"]
 ```
 
-Si el producto deja de estar activo, se rechaza sin escribir. Un UUID ajeno se rechaza. El almacén JSON agrupa las escrituras mediante archivo temporal y reemplazo atómico. Si falla antes de confirmar, se conserva el estado anterior. El prototipo usa un único proceso local y no consulta una base de datos.
+Si el producto deja de estar activo, se rechaza sin escribir. Un UUID ajeno se rechaza. El almacén JSON agrupa las escrituras mediante archivo temporal y reemplazo atómico. Si falla antes de confirmar, se conserva el estado anterior. Al guardar se redirige al historial; las alertas y gráficas se calculan cuando se abre la sección correspondiente. El prototipo usa un único proceso local y no consulta una base de datos.
+
+### Excepciones de escritura comunes
+
+Si ocurre un error de escritura (`OSError`), se conserva el JSON anterior y se muestra un aviso, sin anunciar éxito. Al guardar un producto, movimiento de stock o usuario, permanece el formulario con sus valores; en stock también se conserva el UUID del envío para reintentar. Si falla archivar o reactivar un producto, se vuelve al inventario con el aviso y el estado previo. Si falla cerrar sesión, se vuelve al resumen con el aviso y la sesión permanece abierta, porque no se pudo guardar su invalidación. Estas son ramas de error de los procesos principales representados en los diagramas.
 
 ## 3. Orden para dibujarlo en Draw.io
 
 1. Óvalo: Inicio.
 2. Paralelogramo: captura de usuario/contraseña.
 3. Rombo: credenciales válidas; rama No al formulario y Sí a sesión/rol.
-4. Rectángulo: resumen, seguido de rombo de selección de sección.
+4. Rombo: destino next interno válido. Sí lleva a la ruta solicitada; No lleva al resumen. Cada sección permite volver al menú.
 5. Una rama por sección según el primer diagrama.
 6. Para modificaciones: rombo de permiso → formulario → rombo de validación.
-7. Para stock: bloqueo de escritura → UUID → tipo → cálculo → validación de saldo → guardar historial y stock → confirmar.
+7. Para stock: bloqueo de escritura → UUID. Si ya existe, verificar propietario: propio informa sin repetir; ajeno rechaza. Si es nuevo: tipo → cálculo → validación de saldo → guardar historial y stock → confirmar.
 8. La persistencia se representa con un símbolo de archivo JSON. Conecta errores al formulario y operaciones exitosas al historial.
-9. Conecta cierre de sesión al ingreso.
+9. Conecta cierre de sesión a invalidar sesiones de esa cuenta y volver al ingreso.
 10. Conecta el archivo JSON a las operaciones de lectura y guardado para representar persistencia.
 
 ## Persistencia al volver a abrir
 
-Guardar formulario válido → reemplazar runtime/bodega.json → mostrar éxito. Refrescar o cambiar de sección → leer el mismo archivo. Cerrar sesión → invalidar sesión y conservar datos. Reiniciar → abrir el mismo JSON → ingresar y leer los últimos cambios guardados.
+Guardar formulario válido → reemplazar runtime/bodega.json → mostrar éxito. Refrescar o cambiar de sección → leer el mismo archivo. Cerrar sesión → invalidar las sesiones de esa cuenta y conservar datos. Reiniciar → abrir el mismo JSON → ingresar y leer los últimos cambios guardados.

@@ -18,3 +18,7 @@ La versión actual usa Django, plantillas y JSON sin conexión a una base de dat
 | 10 | Validación y correcciones con apoyo de IA | docs/REVISION_RUBRICA.md y pruebas funcionales/persistencia |
 
 Las pruebas impiden consultas a bases de datos; el JSON conserva cuentas y operaciones entre reinicios. La calificación y la exposición del estudiante corresponden al docente. La evidencia técnica no sustituye la demostración del proyecto ni la explicación del código.
+
+## Revisión de nivel Excelente
+
+[Auditoría completa con el texto original de cada indicador](AUDITORIA_FINAL.md). Resultado técnico: evidencia para los diez indicadores, 31 pruebas aprobadas desde el ZIP y correcciones verificadas. La calificación final la determina el docente.

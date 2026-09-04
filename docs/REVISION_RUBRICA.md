@@ -13,14 +13,18 @@
 
 La suite de warehouse usa SimpleTestCase y archivos temporales; está prohibido consultar una base de datos. Incluye persistencia entre tres procesos de Python independientes, creación/edición de administradores, contraseña modificada, productos, stock, recargas, cierre de sesión, cliente nuevo y preparación sin restablecer datos.
 
-Resultado final: **20 pruebas aprobadas** (19 funcionales y una de persistencia entre tres procesos); Django check sin problemas. Se corrigió una importación indirecta de autenticación que causaba error al redirigir usuarios sin sesión. Las pruebas no alteran el JSON privado del usuario.
+Resultado final: **31 pruebas aprobadas desde una extracción nueva del ZIP**; Django check sin problemas. Incluyen 19 pruebas funcionales, una de persistencia entre tres procesos, 9 regresiones de auditoría y 2 de navegación y errores de formulario. Se corrigió una importación indirecta de autenticación que causaba error al redirigir usuarios sin sesión. Las pruebas no alteran el JSON privado del usuario.
 
 ## Revisión visual
 
 Las revisiones de escritorio comprobaron ingreso, secciones, filtros, rechazo de salida sin existencias, historial, ubicaciones, usuarios, gráficas y navegación en la misma pestaña. La revisión final confirmó el ingreso con la cuenta conservada y la navegación a reportes en la misma pestaña: 12 productos, 315 unidades, 24 movimientos, 405 entradas y 90 salidas en los datos ficticios locales.
 
-No se declara validación visual móvil completa: el intento anterior de cambiar resolución mantuvo el tamaño de escritorio. El CSS contiene reglas adaptativas y tablas con desplazamiento horizontal.
+La auditoría actual verificó dimensiones efectivas de 1440 × 1000 y 390 × 844. Se revisaron resumen, inventario, formulario de stock y reportes; el móvil no desborda horizontalmente la página. Las tablas amplias y el menú tienen desplazamiento propio. No se observaron errores de consola.
 
 ## GitHub
 
-Repositorio: https://github.com/PabloDoussang/SoundStock . Publicación completada y verificada el 3 de septiembre de 2026. Se comprobó el código funcional en el commit a2a4a3afa7e6869db1291824e8a76fce929a6638 y los archivos del remoto: index.html en la raíz, iniciar.bat, manage.py, config, warehouse, templates, static y docs. No se suben runtime, la base de respaldo, cuentas, hashes ni claves locales.
+Repositorio: https://github.com/PabloDoussang/SoundStock . Publicación completada y verificada el 3 de septiembre de 2026. Se verifican la rama main y los archivos del remoto: index.html en la raíz, iniciar.bat, manage.py, config, warehouse, templates, static y docs. No se suben runtime, la base de respaldo, cuentas, hashes ni claves locales.
+
+## Auditoría para nivel Excelente
+
+[Informe completo por los diez indicadores](AUDITORIA_FINAL.md), con fallos corregidos, evidencias, alcance y demostración sugerida. Incluye validación de contraseñas, sesiones, SKU, cambio de operación sin perder producto y errores de escritura recuperables.

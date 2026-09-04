@@ -16,6 +16,7 @@ from warehouse.access import login_required, operator_required, administrator_re
 from . import store
 from .forms import ProductForm, MovementForm, UserForm, LoginForm, ReportFilter, CATEGORIES, KINDS
 
+SAVE_ERROR='No se pudieron guardar los cambios en el archivo de datos. Se conserva la versión anterior. Intenta nuevamente.'
 def page(request,template,**context):
     return render(request,'warehouse/'+template+'.html',context)
 
@@ -77,8 +78,12 @@ def login(request):
 @require_POST
 def logout(request):
     if request.user.is_authenticated:
-        with store.edit() as data:
-            fetch(data['users'],request.user.pk)['session_version']=str(uuid.uuid4())
+        try:
+            with store.edit() as data:
+                fetch(data['users'],request.user.pk)['session_version']=str(uuid.uuid4())
+        except OSError:
+            messages.error(request,'No se pudo cerrar la sesión porque no se pudo actualizar el archivo de datos. Intenta nuevamente.')
+            return redirect('dashboard')
     request.session.flush()
     return redirect('login')
 
@@ -118,6 +123,7 @@ def product_edit(request,pk=None):
             messages.success(request,'Producto guardado. Registra existencias desde Operaciones de stock.')
             return redirect('products')
         except ValidationError as error: form.add_error(None,error)
+        except OSError: form.add_error(None,SAVE_ERROR)
     return page(request,'form',title='Editar producto' if pk else 'Nuevo producto',section='products',form=form,back='products',hint='El stock se modifica desde Operaciones de stock para conservar el historial.',submit='Guardar producto')
 
 @administrator_required
@@ -126,13 +132,18 @@ def product_archive(request,pk):
     p=next((p for p in products if p.pk==pk),None)
     if p is None: raise Http404
     if request.method=='POST':
-        with store.edit() as data:
-            row=fetch(data['products'],pk)
-            if row['active'] and row['stock']:
-                messages.error(request,'Para archivar el producto, registra primero la salida o el ajuste de sus existencias.')
-            else:
-                row['active']=not row['active']
-                messages.success(request,'Producto reactivado.' if row['active'] else 'Producto archivado; se conserva todo su historial.')
+        try:
+            with store.edit() as data:
+                row=fetch(data['products'],pk)
+                if row['active'] and row['stock']:
+                    level=messages.ERROR
+                    notice='Para archivar el producto, registra primero la salida o el ajuste de sus existencias.'
+                else:
+                    row['active']=not row['active']
+                    level=messages.SUCCESS
+                    notice='Producto reactivado.' if row['active'] else 'Producto archivado; se conserva todo su historial.'
+            messages.add_message(request,level,notice)
+        except OSError: messages.error(request,SAVE_ERROR)
         return redirect('products')
     return page(request,'confirm',title='Archivar producto' if p.active else 'Reactivar producto',section='products',product=p,back='products')
 
@@ -147,7 +158,8 @@ def movement_new(request):
                 existing=next((m for m in data['movements'] if m['token']==str(values['token'])),None)
                 if existing:
                     if existing['user']!=request.user.pk: raise ValidationError('Identificador de operación inválido.')
-                    messages.info(request,'Esta operación ya estaba registrada. No se duplicó el stock.')
+                    level=messages.INFO
+                    notice='Esta operación ya estaba registrada. No se duplicó el stock.'
                 else:
                     p=fetch(data['products'],values['product'])
                     if not p['active']: raise ValidationError('El producto ya no está activo.')
@@ -160,9 +172,12 @@ def movement_new(request):
                     data['movements'].append(dict(id=mid,product=p['id'],kind=kind,delta=after-before,before=before,after=after,
                         reason=values['reason'],destination=values['destination'],user=request.user.pk,created_at=timezone.now().isoformat(),token=str(values['token'])))
                     p['stock']=after
-                    messages.success(request,f'MOV-{mid:05d} registrado. Stock resultante: {after} unidades.')
+                    level=messages.SUCCESS
+                    notice=f'MOV-{mid:05d} registrado. Stock resultante: {after} unidades.'
+            messages.add_message(request,level,notice)
             return redirect('movements')
         except ValidationError as error: form.add_error(None,error)
+        except OSError: form.add_error(None,SAVE_ERROR)
     return page(request,'stock_form',title='Operaciones de stock',section='movement_new',form=form,
         stock_data=[dict(id=p.id,stock=p.stock,minimum=p.minimum,location=p.location) for p in products if p.active])
 
@@ -234,12 +249,16 @@ def user_edit(request,pk=None):
             with store.edit() as data:
                 if any(u['username']==values['username'] and u['id']!=pk for u in data['users']): raise ValidationError('Ya existe una cuenta con este nombre de usuario.')
                 row=fetch(data['users'],pk) if pk else dict(id=store.next_id(data['users']),session_version=str(uuid.uuid4()))
+                state_changed=bool(pk and row['is_active']!=values['is_active'])
                 row.update(values)
                 if password:
-                    row['password']=make_password(password);row['session_version']=str(uuid.uuid4())
+                    row['password']=make_password(password)
+                if password or state_changed:
+                    row['session_version']=str(uuid.uuid4())
                 if not pk: data['users'].append(row)
-                if pk==request.user.pk: request.session['u1_version']=row['session_version']
+            if pk==request.user.pk: request.session['u1_version']=row['session_version']
             messages.success(request,'Usuario guardado.')
             return redirect('users')
         except ValidationError as error: form.add_error(None,error)
+        except OSError: form.add_error(None,SAVE_ERROR)
     return page(request,'form',title='Editar usuario' if pk else 'Nuevo usuario',section='users',form=form,back='users',hint='Consulta: lectura. Operador: productos y stock. Administrador: acceso completo.',submit='Guardar usuario')

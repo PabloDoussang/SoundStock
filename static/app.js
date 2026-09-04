@@ -43,6 +43,14 @@ if(stockForm){
   const data=JSON.parse(document.getElementById('stock-data').textContent),product=document.getElementById('id_product'),kind=document.getElementById('id_kind'),quantity=document.getElementById('id_quantity'),dest=document.getElementById('id_destination'),preview=document.getElementById('stock-preview');
   function update(){
     const p=data.find(p=>p.id===Number(product.value)), n=quantity.value===''?null:Number(quantity.value);
+    document.querySelectorAll('[data-operation]').forEach(link=>{
+      const target=new URL(link.href,window.location.href);
+      if(product.value) target.searchParams.set('product',product.value);
+      else target.searchParams.delete('product');
+      link.href=target.href;
+      link.classList.toggle('active',link.dataset.operation===kind.value);
+      link.setAttribute('aria-current',link.dataset.operation===kind.value?'true':'false');
+    });
     dest.closest('.field').hidden=kind.value!=='salida';dest.required=kind.value==='salida';
     quantity.min=kind.value==='ajuste'?'0':'1';
     if(!p){preview.textContent='Selecciona un producto para consultar sus existencias.';return;}
@@ -57,6 +65,17 @@ document.addEventListener('click', (event) => {
   if (event.defaultPrevented || event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
   const link = event.target.closest?.('a[href]');
   if (!link || link.hasAttribute('download')) return;
+  // Cambiar operación conserva el producto y los valores ya escritos.
+  // El href conserva el producto cuando JavaScript no está disponible.
+  if(stockForm && link.hasAttribute('data-operation')){
+    event.preventDefault();
+    event.stopPropagation();
+    const kind=document.getElementById('id_kind');
+    kind.value=link.dataset.operation;
+    kind.dispatchEvent(new Event('input',{bubbles:true}));
+    window.history.replaceState(null,'',link.href);
+    return;
+  }
   const destination = new URL(link.href, window.location.href);
   if (destination.origin !== window.location.origin || !['http:', 'https:'].includes(destination.protocol)) return;
   if (destination.pathname === window.location.pathname && destination.search === window.location.search && destination.hash) return;

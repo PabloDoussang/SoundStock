@@ -5,10 +5,10 @@ from datetime import timedelta
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 from django.contrib.auth.hashers import make_password
-from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 from warehouse.usernames import normalize_username
+from warehouse.forms import validate_account_password
 from warehouse import store
 
 class Command(BaseCommand):
@@ -21,7 +21,7 @@ class Command(BaseCommand):
         except ValidationError as error: raise CommandError(' '.join(error.messages))
         password=getpass('Contraseña: ')
         if password!=getpass('Repite la contraseña: '): raise CommandError('Las contraseñas no coinciden.')
-        try: validate_password(password)
+        try: validate_account_password(password,dict(username=username,first_name=username))
         except ValidationError as error: raise CommandError(' '.join(error.messages))
         demo=input('¿Cargar productos ficticios? [s/N]: ').strip().lower()=='s'
         with store.edit() as data:

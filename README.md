@@ -31,7 +31,7 @@ Usuarios, hashes de contraseñas, permisos, productos y movimientos se guardan e
 | Volver a iniciar el proyecto | Se reutiliza el JSON existente, sin reinicializarlo |
 | Abandonar un formulario sin guardar | El borrador no se conserva |
 
-Cerrar sesión invalida el acceso de esa sesión, no elimina la cuenta ni el inventario. Las sesiones firmadas vencen a las 8 horas. Las contraseñas se almacenan mediante hash; se cambian desde **Usuarios y roles**.
+Cerrar sesión invalida todas las sesiones abiertas de esa misma cuenta; conserva la cuenta y el inventario. Las sesiones firmadas vencen a las 8 horas. Las contraseñas se almacenan mediante hash; se cambian desde **Usuarios y roles**.
 
 El servidor guarda las operaciones con un archivo temporal y reemplazo atómico: historial y stock se guardan juntos. Un error de validación no escribe cambios. El proyecto está diseñado para **una instancia local del servidor**; no ejecutes varios servidores simultáneamente sobre el mismo JSON.
 
@@ -108,11 +108,12 @@ runtime/bodega.json           Datos privados locales; no se distribuye
 .\.venv\Scripts\python.exe manage.py test warehouse
 ```
 
-Las pruebas usan archivos temporales, prohíben el acceso a base de datos y comprueban permisos, operaciones, validaciones, renderizado y persistencia entre procesos. No modifican tus datos locales. Consulta [la revisión](docs/REVISION_RUBRICA.md) para los resultados.
+**31 pruebas aprobadas.** Las pruebas usan archivos temporales, prohíben el acceso a base de datos y comprueban permisos, operaciones, validaciones, renderizado y persistencia entre procesos. No modifican tus datos locales. Consulta [la revisión](docs/REVISION_RUBRICA.md) para los resultados.
 
 ## Documentación
 
 - [Matriz de los diez indicadores](docs/RUBRICA.md)
+- [Auditoría final para nivel Excelente](docs/AUDITORIA_FINAL.md)
 - [Revisión y evidencias](docs/REVISION_RUBRICA.md)
 - [Diagramas de flujo](docs/DIAGRAMAS.md)
 - [Esquema de datos](docs/MODELO_DATOS.md)

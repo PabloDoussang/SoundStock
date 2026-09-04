@@ -27,12 +27,26 @@
 <polyline points="725,530 725,570" fill="none" stroke="#688c78" stroke-width="3"/>
 <polygon points="725,570 720.1068745632851,559.0429327162523 729.8931254367149,559.0429327162523" fill="#688c78"/>
 <text x="755" y="550" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, Arial, sans-serif" font-size="17" font-weight="700" fill="#486854">Sí</text>
-<rect x="1060" y="575" width="340" height="80" rx="12" fill="#e3eee7" stroke="#b9cec1" stroke-width="2"/>
-<text x="1230.0" y="601.5" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, Arial, sans-serif" font-size="19" font-weight="700" fill="#183e2b">Si ya existe: no repetir</text>
-<text x="1230.0" y="628.5" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, Arial, sans-serif" font-size="19" font-weight="400" fill="#183e2b">Ir al historial</text>
+<polygon points="1230.0,555 1400,615.0 1230.0,675 1060,615.0" fill="#f5ebd8" stroke="#93b19f" stroke-width="2"/>
+<text x="1230.0" y="601.5" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, Arial, sans-serif" font-size="19" font-weight="700" fill="#183e2b">¿UUID del mismo</text>
+<text x="1230.0" y="628.5" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, Arial, sans-serif" font-size="19" font-weight="400" fill="#183e2b">usuario?</text>
 <polyline points="950,610 1060,610" fill="none" stroke="#688c78" stroke-width="3"/>
 <polygon points="1060,610 1049.0429327162524,614.8931254367149 1049.0429327162524,605.1068745632851" fill="#688c78"/>
 <text x="1003" y="587" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, Arial, sans-serif" font-size="17" font-weight="700" fill="#486854">Duplicado</text>
+<rect x="990" y="715" width="215" height="105" rx="30" fill="#e3eee7" stroke="#b9cec1" stroke-width="2"/>
+<text x="1097.5" y="740.5" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, Arial, sans-serif" font-size="19" font-weight="700" fill="#183e2b">No repetir</text>
+<text x="1097.5" y="767.5" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, Arial, sans-serif" font-size="19" font-weight="400" fill="#183e2b">Ir al historial</text>
+<text x="1097.5" y="794.5" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, Arial, sans-serif" font-size="19" font-weight="400" fill="#183e2b">Sin cambiar stock</text>
+<rect x="1240" y="715" width="215" height="105" rx="30" fill="#f9e8e2" stroke="#b9cec1" stroke-width="2"/>
+<text x="1347.5" y="740.5" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, Arial, sans-serif" font-size="19" font-weight="700" fill="#183e2b">Rechazar UUID</text>
+<text x="1347.5" y="767.5" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, Arial, sans-serif" font-size="19" font-weight="400" fill="#183e2b">Mostrar error</text>
+<text x="1347.5" y="794.5" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, Arial, sans-serif" font-size="19" font-weight="400" fill="#183e2b">Sin cambios</text>
+<polyline points="1230,675 1230,695 1097,695 1097,715" fill="none" stroke="#688c78" stroke-width="3"/>
+<polygon points="1097,715 1092.1068745632851,704.0429327162523 1101.8931254367149,704.0429327162523" fill="#688c78"/>
+<text x="1100" y="677" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, Arial, sans-serif" font-size="17" font-weight="700" fill="#486854">Sí</text>
+<polyline points="1230,675 1230,695 1347,695 1347,715" fill="none" stroke="#688c78" stroke-width="3"/>
+<polygon points="1347,715 1342.1068745632851,704.0429327162523 1351.8931254367149,704.0429327162523" fill="#688c78"/>
+<text x="1347" y="677" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, Arial, sans-serif" font-size="17" font-weight="700" fill="#486854">No</text>
 <rect x="500" y="695" width="450" height="80" rx="12" fill="#ffffff" stroke="#b9cec1" stroke-width="2"/>
 <text x="725.0" y="721.5" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, Arial, sans-serif" font-size="19" font-weight="700" fill="#183e2b">Leer producto activo</text>
 <text x="725.0" y="748.5" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, Arial, sans-serif" font-size="19" font-weight="400" fill="#183e2b">y stock actual</text>
@@ -86,8 +100,9 @@
 <polygon points="725,1415 720.1068745632851,1404.0429327162524 729.8931254367149,1404.0429327162524" fill="#688c78"/>
 <rect x="500" y="1530" width="450" height="85" rx="30" fill="#d9ecdf" stroke="#b9cec1" stroke-width="2"/>
 <text x="725.0" y="1559.0" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, Arial, sans-serif" font-size="19" font-weight="700" fill="#183e2b">Mostrar éxito → historial</text>
-<text x="725.0" y="1586.0" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, Arial, sans-serif" font-size="19" font-weight="400" fill="#183e2b">Alertas y reportes se actualizan</text>
+<text x="725.0" y="1586.0" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, Arial, sans-serif" font-size="19" font-weight="400" fill="#183e2b">Leer JSON al abrir cada sección</text>
 <polyline points="725,1490 725,1530" fill="none" stroke="#688c78" stroke-width="3"/>
 <polygon points="725,1530 720.1068745632851,1519.0429327162524 729.8931254367149,1519.0429327162524" fill="#688c78"/>
-<text x="725" y="1670" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, Arial, sans-serif" font-size="19" font-weight="400" fill="#637c70">Sin sesión: ingreso · Sin permiso: 403 · Cancelar: inventario · Error de escritura: sin cambios</text>
+<text x="725" y="1645" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, Arial, sans-serif" font-size="19" font-weight="400" fill="#637c70">Resumen y Reportes calculan alertas y gráficas cuando se abre su sección.</text>
+<text x="725" y="1685" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, Arial, sans-serif" font-size="19" font-weight="400" fill="#637c70">Sin sesión: ingreso · Sin permiso: 403 · Cancelar: inventario · Error de escritura: sin cambios</text>
 <text x="65" y="1743" text-anchor="start" dominant-baseline="central" font-family="Segoe UI, Arial, sans-serif" font-size="17" font-weight="400" fill="#637c70">Fuente detallada y editable: docs/DIAGRAMAS.md · Sí = continuar / No = corregir o rechazar</text></svg>

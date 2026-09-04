@@ -7,7 +7,7 @@
 | Atributo | Tipo JSON | Regla |
 |---|---|---|
 | id | entero | Identificador único |
-| code | texto | SKU único, normalizado, 3–30 caracteres A–Z, 0–9 y guion |
+| code | texto | SKU único, normalizado a mayúsculas, 3–30 caracteres A–Z, 0–9 y guion |
 | name | texto | Obligatorio, máximo 120 caracteres |
 | category | texto | Cuerdas, Percusión, Teclados, Audio, DJ o Accesorios |
 | location | texto | Ubicación física obligatoria, máximo 60 caracteres |
@@ -42,7 +42,7 @@ Los movimientos conservan valores, responsable y fecha. Los nombres del producto
 | password | texto | Hash generado por Django; nunca contraseña en texto plano |
 | is_active | booleano | Habilita o deshabilita ingreso |
 | role | texto | Administrador, Operador o Consulta |
-| session_version | texto UUID | Permite invalidar sesiones al salir o cambiar contraseña |
+| session_version | texto UUID | Invalida sesiones al salir, cambiar contraseña o activar/desactivar la cuenta |
 
 ```mermaid
 erDiagram
@@ -66,13 +66,18 @@ erDiagram
         integer before
         integer after
         integer delta
+        string reason
+        string destination
         string created_at
         string token UK
     }
     USER {
         integer id PK
         string username UK
-        string password_hash
+        string first_name
+        string last_name
+        string email
+        string password "Hash de Django"
         string role
         boolean is_active
         string session_version
