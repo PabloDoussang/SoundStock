@@ -1,8 +1,8 @@
-# SoundStock desde cero · guía para la terminal de VS Code
+# SoundStock-main · guía para la terminal de VS Code
 
 Este proyecto toma el caso de bodega del primer ZIP (`SoundStock-main.zip`) y sigue la secuencia de aprendizaje del segundo (`django-examples-main.zip`): crear proyecto y apps, configurar SQLite, definir modelos, generar y aplicar migraciones, crear un diagrama, cargar datos con Faker y usar Django Admin. El código y las migraciones ya están incluidos en `SoundStock/`.
 
-**Abre esta carpeta (`SoundStock_desde_cero`) en Visual Studio Code.** En la terminal, usa el perfil **Símbolo del sistema / Command Prompt**. Los pasos 1–7 documentan cómo se creó la estructura en una carpeta vacía. Si trabajas con esta entrega ya creada, ve directamente a [Abrir la entrega existente](#abrir-la-entrega-existente): volver a ejecutar `startproject` o `startapp` sobre las carpetas existentes dará un error de nombre duplicado.
+**Abre esta carpeta (`SoundStock-main`) en Visual Studio Code.** En la terminal, usa el perfil **Símbolo del sistema / Command Prompt**. Los pasos 1–7 documentan cómo se creó la estructura en una carpeta vacía. Si trabajas con esta entrega ya creada, ve directamente a [Abrir la entrega existente](#abrir-la-entrega-existente): volver a ejecutar `startproject` o `startapp` sobre las carpetas existentes dará un error de nombre duplicado.
 
 Para consultar rápidamente los comandos de Faker y la ubicación de cada archivo, abre [GUIA_FAKER_Y_ARCHIVOS.txt](GUIA_FAKER_Y_ARCHIVOS.txt).
 
@@ -153,7 +153,7 @@ python manage.py cargar_catalogo
 
 ### 15. Cargar datos ficticios como `seed_empleado`
 
-Los comandos están en `management/commands/` de cada app. Usan `Faker('es_CL')`, una semilla reproducible y claves estables; buscan o crean las categorías compartidas. La carga de productos usa lotes, por lo que escala a un millón de filas. Si se repite, actualiza descripciones y otros datos de prueba sin duplicar SKU ni borrar stock o movimientos existentes.
+Los comandos están en `management/commands/` de cada app. Usan `Faker('es_CL')`. Cambia el número después de `--cantidad` por el total que necesites:
 
 ```cmd
 python manage.py seed_productos --cantidad 100
@@ -161,20 +161,15 @@ python manage.py seed_usuarios --cantidad 20
 python manage.py seed_movimientos --cantidad 100
 ```
 
-`seed_usuarios` crea cuentas ficticias desactivadas y sin contraseña utilizable. `seed_movimientos` crea una entrada por producto de prueba, vinculada a un responsable ficticio, y mantiene sincronizado el stock. Vuelve a ejecutar los tres comandos para mostrar que no generan duplicados:
+Para cargar 1.000 productos, por ejemplo, ejecuta `python manage.py seed_productos --cantidad 1000`. Ejecutar primero 100 y después 1.000 deja **1.000 productos de prueba**, porque el comando reconoce los anteriores y no los duplica. Si quieres un segundo grupo adicional, usa otro prefijo: `python manage.py seed_productos --cantidad 500 --prefijo OTRO`.
+
+`seed_usuarios` crea cuentas ficticias desactivadas y `seed_movimientos` crea entradas de stock. Para movimientos, carga primero al menos la misma cantidad de productos con el mismo prefijo. Verifica lo guardado con:
 
 ```cmd
-python manage.py seed_productos --cantidad 100
-python manage.py seed_usuarios --cantidad 20
-python manage.py seed_movimientos --cantidad 100
 python manage.py verificar_bd
 ```
 
-Puedes cambiar `--cantidad`, `--lote`, `--semilla` o `--prefijo` en `seed_productos`. Por ejemplo:
-
-```cmd
-python manage.py seed_productos --cantidad 1000 --lote 2000
-```
+La [guía TXT](GUIA_FAKER_Y_ARCHIVOS.txt) contiene los comandos para 100, 1.000, 100.000 y 1.000.000, y ubica cada archivo del proyecto.
 
 ### 16. Demostrar las cuatro cargas solicitadas
 

@@ -1,148 +1,87 @@
-SOUNDSTOCK - GUÍA DE FAKER Y MAPA DEL PROYECTO
-================================================
+SOUNDSTOCK-MAIN: FAKER Y UBICACIÓN DE LOS ARCHIVOS
+===================================================
 
-1. ABRIR EL PROYECTO EN VS CODE
+ABRIR LA TERMINAL
+-----------------
+Abre la carpeta SoundStock-main en VS Code y usa una terminal CMD. Escribe:
 
-Abre la carpeta SoundStock_desde_cero en VS Code y selecciona una terminal
-Símbolo del sistema (CMD). Ejecuta:
-
-    cmd
     venv\Scripts\activate.bat
     cd SoundStock
-    pip install -r requirements.txt
-    python manage.py migrate
 
-Todos los comandos que empiezan con "python manage.py" se ejecutan desde la
-carpeta SoundStock, que contiene manage.py. Si descomprimes el ZIP en otro
-equipo, crea antes el entorno con "python -m venv venv" y después actívalo.
-Si la base está vacía, crea un administrador con "python manage.py createsuperuser".
+Los comandos siguientes se ejecutan desde la carpeta que contiene manage.py.
+Si abriste el proyecto desde el ZIP en otro equipo, primero crea el entorno
+con "python -m venv venv", actívalo y ejecuta "pip install -r requirements.txt"
+desde la carpeta interna SoundStock. Después ejecuta "python manage.py migrate".
 
-2. AÑADIR DATOS FICTICIOS CON FAKER A LA BASE LOCAL
-
-Productos (se crean también las 6 categorías compartidas):
+CARGAR PRODUCTOS FICTICIOS
+--------------------------
+Elige el total que quieres guardar en tu base local:
 
     python manage.py seed_productos --cantidad 100
     python manage.py seed_productos --cantidad 1000
     python manage.py seed_productos --cantidad 100000 --lote 5000
     python manage.py seed_productos --cantidad 1000000 --lote 5000
 
-Usa UNO de esos comandos para el total que deseas. Con el prefijo DEMO,
-ejecutar 100 y luego 1000 deja 1000 productos DEMO, no 1100: los SKU existentes
-se actualizan sin duplicarse. Para agregar un grupo nuevo sin reemplazar el
-anterior, cambia el prefijo:
+Puedes usar cualquier número de 1 a 1.000.000. Si ejecutas primero 100 y
+después 1.000, quedan 1.000 productos DEMO, no 1.100: el comando reconoce
+los códigos existentes. Para sumar un grupo distinto, cambia el prefijo:
 
-    python manage.py seed_productos --cantidad 500 --prefijo CLASEB
+    python manage.py seed_productos --cantidad 500 --prefijo OTRO
 
-El prefijo debe empezar con letra y tener como máximo 10 letras/números. Por
-ejemplo, los SKU del segundo grupo serán CLASEB-P-0000001, etc. La cantidad
-admitida va de 1 a 1.000.000. El lote va de 1 a 10.000 y controla cuántas
-filas se procesan en cada bloque. La semilla hace repetibles los datos:
+Así tendrás los productos DEMO más 500 productos OTRO.
 
-    python manage.py seed_productos --cantidad 300 --lote 1000 --semilla 42
-
-Usuarios ficticios (desactivados y sin acceso de inicio de sesión):
-
+USUARIOS Y MOVIMIENTOS FICTICIOS
+--------------------------------
     python manage.py seed_usuarios --cantidad 20
-    python manage.py seed_usuarios --cantidad 1000 --lote 2000
+    python manage.py seed_movimientos --cantidad 100
 
-Las cuentas se llaman demo_usuario_0000001, etc. Repetir el comando actualiza
-las cuentas existentes y no crea duplicados. No reemplazan al superusuario.
+Antes de cargar 100 movimientos, debes tener al menos 100 productos DEMO.
+Si tus productos usan --prefijo OTRO, añade --prefijo OTRO al comando de
+movimientos. Repetir cualquiera de estos comandos no duplica sus registros.
+Los usuarios ficticios quedan desactivados; no reemplazan al administrador.
 
-Movimientos ficticios de entrada y actualización del stock:
-
-    python manage.py seed_productos --cantidad 100 --prefijo DEMO
-    python manage.py seed_movimientos --cantidad 100 --prefijo DEMO
-
-Primero deben existir al menos esa cantidad de productos activos con el mismo
-prefijo. Si usaste CLASEB, usa también --prefijo CLASEB en movimientos. Cada
-movimiento queda vinculado a su producto y a demo_responsable. Repetir el
-comando no duplica el movimiento ni vuelve a sumar el stock.
-
-Después de cualquier carga, comprueba los conteos y la integridad:
-
+COMPROBAR LOS DATOS
+-------------------
     python manage.py verificar_bd
 
-También puedes mirar los registros en http://127.0.0.1:8000/admin/ después de
-ejecutar "python manage.py runserver 127.0.0.1:8000".
+Para verlos en la página, ejecuta "python manage.py runserver 127.0.0.1:8000"
+y abre http://127.0.0.1:8000/admin/.
 
-3. PROBAR LAS CUATRO CANTIDADES DE LA PAUTA SIN LLENAR TU BASE LOCAL
-
+PRUEBA DE LAS CUATRO CANTIDADES DE LA PAUTA
+------------------------------------------
     python manage.py evaluar_cargas
 
-Prueba sucesivamente 100, 1.000, 100.000 y 1.000.000 de PRODUCTOS en una
-base SQLite temporal. Comprueba los conteos, las migraciones, la integridad y
-las claves foráneas; al terminar, guarda RESULTADOS_CARGAS.json. El millón
-puede tardar varios minutos. Este comando NO deja el millón en db.sqlite3.
+Prueba 100, 1.000, 100.000 y 1.000.000 de productos y guarda el resultado
+en RESULTADOS_CARGAS.json. Usa una base temporal: no añade el millón a la
+base local que ves en Admin. Para llenarla, usa seed_productos como arriba.
 
-Para una demostración rápida solo con las dos primeras cantidades:
+DÓNDE ENCONTRAR CADA COSA
+------------------------
+README.md                              Pasos completos para VS Code y entrega.
+SoundStock/manage.py                   Comandos de Django.
+SoundStock/SoundStock/settings.py       Base SQLite y apps instaladas.
+SoundStock/usuarios/models.py          Modelo de usuarios y roles.
+SoundStock/catalogo/models.py          Categorías y productos.
+SoundStock/inventario/models.py        Movimientos de stock.
+SoundStock/*/admin.py                  Configuración de Django Admin.
+SoundStock/*/migrations/               Historial de migraciones.
+SoundStock/catalogo/management/commands/seed_productos.py
+                                       Faker para productos.
+SoundStock/usuarios/management/commands/seed_usuarios.py
+                                       Faker para usuarios.
+SoundStock/inventario/management/commands/seed_movimientos.py
+                                       Faker para movimientos.
+SoundStock/catalogo/management/commands/evaluar_cargas.py
+                                       Prueba hasta un millón de registros.
+SoundStock/inventario/management/commands/verificar_bd.py
+                                       Comprueba conexión, conteos e integridad.
+SoundStock/DIAGRAMA_BD.md              Diagrama y diccionario de datos.
+SoundStock/IMAGEN_MODELO_BD.png        Imagen para entregar en la plataforma.
+SoundStock/RESULTADOS_CARGAS.json      Resultados de las cuatro cargas.
+SoundStock/inventario/tests.py         Pruebas del Admin y de la base.
+SoundStock/templates/                  Páginas HTML.
+SoundStock/static/                     Estilos.
+SoundStock/db.sqlite3                  Base local; no se publica en GitHub.
 
-    python manage.py evaluar_cargas --cantidades 100 1000
-
-Si el docente necesita ver datos en la base LOCAL y el Admin, usa directamente
-seed_productos con la cantidad deseada y después verificar_bd. Para mostrar
-movimientos, ejecuta también seed_movimientos con una cantidad compatible.
-
-4. DÓNDE ESTÁ CADA COSA
-
-En la carpeta exterior SoundStock_desde_cero:
-
-    README.md                    Secuencia completa de comandos y explicación.
-    GUIA_FAKER_Y_ARCHIVOS.txt    Esta guía rápida.
-    venv/                        Entorno virtual local; no va en el ZIP ni en GitHub.
-    SoundStock/                  Proyecto Django; aquí está manage.py.
-
-Dentro de SoundStock/:
-
-    manage.py                    Entrada a todos los comandos de Django.
-    requirements.txt            Versiones de Django, Faker y Pillow.
-    SoundStock/settings.py       Apps, SQLite y usuario personalizado.
-    SoundStock/urls.py           Rutas generales del sitio y /admin/.
-    usuarios/models.py          Modelo Usuario y sus roles.
-    catalogo/models.py          Modelos Categoria y Producto.
-    inventario/models.py        Modelo Movimiento y sus relaciones.
-    usuarios/admin.py           Configuración de usuarios en Django Admin.
-    catalogo/admin.py           Admin de categorías y productos.
-    inventario/admin.py         Admin de movimientos.
-    */migrations/               Historial de estructura de la base de datos.
-    catalogo/data/              JSON con el catálogo original del primer ZIP.
-    catalogo/management/commands/seed_productos.py
-                                 Faker para categorías y productos.
-    usuarios/management/commands/seed_usuarios.py
-                                 Faker para usuarios ficticios.
-    inventario/management/commands/seed_movimientos.py
-                                 Faker para movimientos y stock.
-    catalogo/management/commands/evaluar_cargas.py
-                                 Prueba de 100, 1.000, 100.000 y 1.000.000.
-    catalogo/management/commands/diagrama_bd.py
-                                 Genera el diagrama y su imagen desde los modelos.
-    catalogo/management/commands/cargar_catalogo.py
-                                 Carga los productos originales del primer ZIP.
-    inventario/management/commands/verificar_bd.py
-                                 Revisa conexión, datos e integridad SQLite.
-    inventario/services.py       Reglas del movimiento y actualización de stock.
-    */views.py                   Páginas y acciones de la aplicación.
-    */urls.py                    Rutas de cada app.
-    templates/                   Plantillas HTML.
-    static/                      CSS y recursos estáticos.
-    inventario/tests.py          Pruebas de CRUD, Admin, seeders y base de datos.
-    DIAGRAMA_BD.md               Diagrama Mermaid y diccionario de datos.
-    IMAGEN_MODELO_BD.png         Imagen que solicita la plataforma de evaluación.
-    RESULTADOS_CARGAS.json       Evidencia de las cuatro cargas de prueba.
-    VERIFICACION_BD.json         Estado de la base local al ejecutar verificar_bd.
-    db.sqlite3                   Base de datos local; se omite del ZIP y de GitHub.
-
-5. COMPROBACIÓN FINAL PARA LA DEFENSA
-
-    python manage.py check
-    python manage.py makemigrations --check --dry-run
-    python manage.py showmigrations usuarios catalogo inventario
-    python manage.py test
-    python manage.py verificar_bd
-    python manage.py diagrama_bd
-    python manage.py runserver 127.0.0.1:8000
-
-Abre http://127.0.0.1:8000/admin/ y practica crear, consultar, modificar y
-eliminar registros. Revisa README.md para la entrega de la imagen y del enlace
-público de esta versión en GitHub:
-
-    https://github.com/PabloDoussang/SoundStock/tree/evaluacion-2-desde-cero
+La versión pública está en:
+https://github.com/PabloDoussang/SoundStock/tree/evaluacion-2-desde-cero
