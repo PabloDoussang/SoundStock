@@ -153,7 +153,7 @@ python manage.py cargar_catalogo
 
 ### 15. Cargar datos ficticios como `seed_empleado`
 
-Los comandos están en `management/commands/` de cada app. Usan `Faker('es_CL')`. Cambia el número después de `--cantidad` por el total que necesites:
+Ejecuta estos comandos **después de `cd SoundStock`**, desde la carpeta que contiene `manage.py`. Los archivos están en `management/commands/` de cada app y usan `Faker('es_CL')`. El nombre correcto es `seed_productos`, en plural. Cambia el número después de `--cantidad` por el total que necesites:
 
 ```cmd
 python manage.py seed_productos --cantidad 100
@@ -163,7 +163,7 @@ python manage.py seed_movimientos --cantidad 100
 
 Para cargar 1.000 productos, por ejemplo, ejecuta `python manage.py seed_productos --cantidad 1000`. Ejecutar primero 100 y después 1.000 deja **1.000 productos de prueba**, porque el comando reconoce los anteriores y no los duplica. Si quieres un segundo grupo adicional, usa otro prefijo: `python manage.py seed_productos --cantidad 500 --prefijo OTRO`.
 
-`seed_usuarios` crea cuentas ficticias desactivadas y `seed_movimientos` crea entradas de stock. Para movimientos, carga primero al menos la misma cantidad de productos con el mismo prefijo. Verifica lo guardado con:
+Estos comandos cargan registros en `db.sqlite3`; no crean nuevos archivos llamados `seed`. `seed_usuarios` crea cuentas ficticias desactivadas y `seed_movimientos` crea entradas de stock. Para movimientos, carga primero al menos la misma cantidad de productos con el mismo prefijo. Verifica lo guardado con:
 
 ```cmd
 python manage.py verificar_bd

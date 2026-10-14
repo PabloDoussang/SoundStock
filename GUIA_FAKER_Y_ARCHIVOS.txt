@@ -9,6 +9,9 @@ Abre la carpeta SoundStock-main en VS Code y usa una terminal CMD. Escribe:
     cd SoundStock
 
 Los comandos siguientes se ejecutan desde la carpeta que contiene manage.py.
+Si aparece "can't open file ...SoundStock-main\manage.py", falta el paso
+"cd SoundStock". El comando de productos se llama seed_productos (plural).
+Los comandos seed_* guardan registros en db.sqlite3; no crean archivos nuevos.
 Si abriste el proyecto desde el ZIP en otro equipo, primero crea el entorno
 con "python -m venv venv", actívalo y ejecuta "pip install -r requirements.txt"
 desde la carpeta interna SoundStock. Después ejecuta "python manage.py migrate".
