@@ -34,7 +34,10 @@ class Producto(models.Model):
             models.CheckConstraint(condition=Q(stock__lte=1000000), name='producto_stock_hasta_millon'),
             models.CheckConstraint(condition=Q(stock_minimo__lte=1000000), name='producto_minimo_hasta_millon'),
         ]
-        indexes = [models.Index(fields=['activo', 'categoria'], name='producto_activo_categoria')]
+        indexes = [
+            models.Index(fields=['activo', 'categoria'], name='producto_activo_categoria'),
+            models.Index(fields=['stock'], name='producto_stock_idx'),
+        ]
 
     @property
     def estado_stock(self):

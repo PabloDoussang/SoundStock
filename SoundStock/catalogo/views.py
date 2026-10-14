@@ -22,12 +22,30 @@ def lista(request):
     if request.GET.get('categoria'):
         productos = productos.filter(categoria_id=request.GET['categoria'])
     if request.GET.get('estado') == 'bajo':
-        productos = productos.filter(stock__lte=F('stock_minimo'))
+        productos = productos.filter(stock__gt=0, stock__lte=F('stock_minimo'))
     elif request.GET.get('estado') == 'agotado':
         productos = productos.filter(stock=0)
+    elif request.GET.get('estado') == 'disponible':
+        productos = productos.filter(stock__gt=F('stock_minimo'))
+    for parametro, lookup in (('stock_min', 'stock__gte'), ('stock_max', 'stock__lte')):
+        valor = request.GET.get(parametro, '').strip()
+        if valor.isascii() and valor.isdecimal() and len(valor) <= 7 and int(valor) <= 1000000:
+            productos = productos.filter(**{lookup: int(valor)})
+    ordenes = {
+        'recientes': ('-pk',),
+        'nombre_az': ('nombre', 'pk'),
+        'nombre_za': ('-nombre', '-pk'),
+        'stock_asc': ('stock', 'nombre', 'pk'),
+        'stock_desc': ('-stock', 'nombre', 'pk'),
+    }
+    productos = productos.order_by(*ordenes.get(request.GET.get('orden'), ordenes['recientes']))
+    por_pagina = int(request.GET.get('por_pagina', '20')) if request.GET.get('por_pagina') in ('20', '50', '100') else 20
+    parametros = request.GET.copy()
+    parametros.pop('pagina', None)
     return render(request, 'catalogo/lista.html', {
-        'pagina': Paginator(productos, 20).get_page(request.GET.get('pagina')),
+        'pagina': Paginator(productos, por_pagina).get_page(request.GET.get('pagina')),
         'categorias': Categoria.objects.all(), 'total': productos.count(),
+        'filtros_query': parametros.urlencode(),
     })
 
 

@@ -57,9 +57,12 @@ def filtrar_movimientos(request):
 @login_required
 def movimientos(request):
     rows = filtrar_movimientos(request)
+    parametros = request.GET.copy()
+    parametros.pop('pagina', None)
     return render(request, 'inventario/movimientos.html', {
         'pagina': Paginator(rows, 20).get_page(request.GET.get('pagina')),
         'total': rows.count(), 'tipos': Movimiento.TIPOS,
+        'filtros_query': parametros.urlencode(),
     })
 
 
@@ -114,8 +117,11 @@ def ubicaciones(request):
         rows = rows.filter(Q(ubicacion__icontains=q) | Q(nombre__icontains=q) | Q(codigo__icontains=q))
     lugares = rows.order_by().values('ubicacion').annotate(
         productos=Count('pk'), unidades=Sum('stock')).order_by('ubicacion')
+    parametros = request.GET.copy()
+    parametros.pop('pagina', None)
     return render(request, 'inventario/ubicaciones.html', {
         'pagina': Paginator(lugares, 20).get_page(request.GET.get('pagina')),
+        'filtros_query': parametros.urlencode(),
     })
 
 

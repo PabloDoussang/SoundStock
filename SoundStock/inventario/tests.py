@@ -119,6 +119,35 @@ class SoundStockTests(TestCase):
         self.client.post(reverse('producto_eliminar', args=[nuevo.pk]))
         self.assertFalse(Producto.objects.filter(pk=nuevo.pk).exists())
 
+    def test_product_quantity_and_alphabetical_filters(self):
+        bajo = Producto.objects.create(codigo='MP-BAJO', nombre='Bajo', categoria=self.categoria,
+            ubicacion='A-02', stock=2, stock_minimo=5)
+        disponible = Producto.objects.create(codigo='MP-ZAM', nombre='Zampoña', categoria=self.categoria,
+            ubicacion='A-03', stock=20, stock_minimo=5)
+        url = reverse('productos')
+        respuesta = self.client.get(url, {'estado': 'bajo'})
+        self.assertEqual([p.pk for p in respuesta.context['pagina']], [bajo.pk])
+        respuesta = self.client.get(url, {'stock_min': 3, 'stock_max': 30})
+        self.assertEqual([p.pk for p in respuesta.context['pagina']], [disponible.pk])
+        respuesta = self.client.get(url, {'orden': 'nombre_az'})
+        self.assertEqual([p.nombre for p in respuesta.context['pagina']], ['Bajo', 'Guitarra', 'Zampoña'])
+        respuesta = self.client.get(url, {'orden': 'nombre_za'})
+        self.assertEqual([p.nombre for p in respuesta.context['pagina']], ['Zampoña', 'Guitarra', 'Bajo'])
+        admin_url = reverse('admin:catalogo_producto_changelist')
+        respuesta = self.client.get(admin_url, {'cantidad_stock': '1-10', 'orden_productos': 'za'})
+        self.assertEqual([p.pk for p in respuesta.context['cl'].result_list], [bajo.pk])
+        respuesta = self.client.get(admin_url, {'orden_productos': 'az'})
+        self.assertEqual([p.nombre for p in respuesta.context['cl'].result_list], ['Bajo', 'Guitarra', 'Zampoña'])
+        respuesta = self.client.get(admin_url, {'orden_productos': 'stock_desc'})
+        self.assertEqual([p.stock for p in respuesta.context['cl'].result_list], [20, 2, 0])
+        Producto.objects.bulk_create([
+            Producto(codigo=f'MP-EXTRA-{i:02d}', nombre=f'Extra {i:02d}', categoria=self.categoria,
+                ubicacion='A-04') for i in range(25)
+        ])
+        respuesta = self.client.get(f'{url}?pagina=2&pagina=3&orden=nombre_az')
+        self.assertContains(respuesta, 'orden=nombre_az&amp;pagina=1')
+        self.assertNotContains(respuesta, 'pagina=2&amp;pagina=3')
+
     def test_movement_web_forms_filters_and_csv(self):
         values = dict(producto=self.producto.pk, tipo='entrada', cantidad=8,
             motivo='Ingreso', destino='', token=str(uuid4()))
@@ -181,6 +210,8 @@ class SoundStockTests(TestCase):
         call_command('seed_productos', cantidad=100, lote=19, stdout=output)
         call_command('seed_productos', cantidad=100, lote=31, stdout=output)
         self.assertEqual(Producto.objects.filter(codigo__startswith='DEMO-P-').count(), 100)
+        nombres = Producto.objects.filter(codigo__startswith='DEMO-P-').values_list('nombre', flat=True)
+        self.assertGreater(len({nombre.split()[0] for nombre in nombres}), 4)
         call_command('seed_usuarios', cantidad=10, lote=3, stdout=output)
         call_command('seed_usuarios', cantidad=10, lote=7, stdout=output)
         self.assertEqual(Usuario.objects.filter(username__startswith='demo_usuario_').count(), 10)

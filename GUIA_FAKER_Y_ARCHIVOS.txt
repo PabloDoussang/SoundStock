@@ -39,9 +39,11 @@ Así tendrás los productos DEMO más 500 productos OTRO.
 USUARIOS Y MOVIMIENTOS FICTICIOS
 --------------------------------
     python manage.py seed_usuarios --cantidad 20
-    python manage.py seed_movimientos --cantidad 100
+    python manage.py seed_movimientos --cantidad 80
 
-Antes de cargar 100 movimientos, debes tener al menos 100 productos DEMO.
+Antes de cargar 80 movimientos, debes tener al menos 80 productos DEMO.
+Los productos sin movimientos quedan agotados. Para ver variedad de estados,
+carga movimientos para parte de ellos (por ejemplo, 80 de 100 productos).
 Si tus productos usan --prefijo OTRO, añade --prefijo OTRO al comando de
 movimientos. Repetir cualquiera de estos comandos no duplica sus registros.
 Los usuarios ficticios quedan desactivados; no reemplazan al administrador.

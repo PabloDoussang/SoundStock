@@ -9,7 +9,18 @@ from catalogo.models import Categoria, Producto
 
 
 CATEGORIAS = ('Cuerdas', 'Percusión', 'Teclados', 'Audio', 'DJ', 'Accesorios')
-ARTICULOS = ('Guitarra', 'Bajo', 'Teclado', 'Batería', 'Micrófono', 'Cable', 'Monitor')
+ARTICULOS = (
+    ('Guitarra eléctrica', 'Cuerdas'), ('Guitarra acústica', 'Cuerdas'),
+    ('Bajo eléctrico', 'Cuerdas'), ('Ukelele', 'Cuerdas'),
+    ('Batería electrónica', 'Percusión'), ('Cajón peruano', 'Percusión'),
+    ('Teclado digital', 'Teclados'), ('Piano digital', 'Teclados'),
+    ('Micrófono dinámico', 'Audio'), ('Monitor de estudio', 'Audio'),
+    ('Interfaz de audio', 'Audio'), ('Controlador DJ', 'DJ'),
+    ('Mezcladora DJ', 'DJ'), ('Cable XLR', 'Accesorios'),
+    ('Soporte de micrófono', 'Accesorios'),
+)
+MARCAS = ('Andes', 'Aurora', 'Nova', 'Ritmo', 'Sonora')
+LINEAS = ('Classic', 'Live', 'Plus', 'Pro', 'Studio')
 
 
 class Command(BaseCommand):
@@ -29,16 +40,19 @@ class Command(BaseCommand):
             raise CommandError('Prefijo: 1 a 10 letras/números, comenzando con letra.')
         fake = Faker('es_CL')
         fake.seed_instance(options['semilla'])
-        categorias = [Categoria.objects.get_or_create(nombre=nombre)[0] for nombre in CATEGORIAS]
+        categorias = {nombre: Categoria.objects.get_or_create(nombre=nombre)[0] for nombre in CATEGORIAS}
         creados = actualizados = 0
         inicio = perf_counter()
         for comienzo in range(0, cantidad, lote):
             productos = []
             for indice in range(comienzo, min(comienzo + lote, cantidad)):
+                articulo, categoria = fake.random_element(elements=ARTICULOS)
+                marca = fake.random_element(elements=MARCAS)
+                linea = fake.random_element(elements=LINEAS)
                 productos.append(Producto(
                     codigo=f'{prefijo}-P-{indice + 1:07d}',
-                    nombre=f'{fake.random_element(elements=ARTICULOS)} {fake.word()} {indice + 1}'[:120],
-                    categoria=fake.random_element(elements=categorias),
+                    nombre=f'{articulo} {marca} {linea} {indice + 1}',
+                    categoria=categorias[categoria],
                     ubicacion=f'{fake.random_element(elements=("A", "B", "C", "D"))}-{fake.random_int(min=1, max=20):02d}',
                     stock=0, stock_minimo=fake.random_int(min=0, max=30), activo=True,
                     descripcion=fake.sentence(nb_words=6),
