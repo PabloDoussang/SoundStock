@@ -3,7 +3,10 @@ SOUNDSTOCK-MAIN: FAKER Y UBICACIÓN DE LOS ARCHIVOS
 
 ABRIR LA TERMINAL
 -----------------
-Abre la carpeta SoundStock-main en VS Code y usa una terminal CMD. Escribe:
+Abre la carpeta SoundStock-main en VS Code y usa una terminal CMD.
+Dentro de SoundStock-main deben verse README.md y la carpeta SoundStock.
+Si ves otra SoundStock-main adentro, abriste la carpeta exterior de extracción.
+Escribe:
 
     venv\Scripts\activate.bat
     cd SoundStock

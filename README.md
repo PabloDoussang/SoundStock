@@ -4,6 +4,8 @@ Este proyecto toma el caso de bodega del primer ZIP (`SoundStock-main.zip`) y si
 
 **Abre esta carpeta (`SoundStock-main`) en Visual Studio Code.** En la terminal, usa el perfil **Símbolo del sistema / Command Prompt**. Los pasos 1–7 documentan cómo se creó la estructura en una carpeta vacía. Si trabajas con esta entrega ya creada, ve directamente a [Abrir la entrega existente](#abrir-la-entrega-existente): volver a ejecutar `startproject` o `startapp` sobre las carpetas existentes dará un error de nombre duplicado.
 
+Al extraer `SoundStock-main.zip` con **Extraer todo** de Windows, dentro de `SoundStock-main` deben quedar directamente `README.md` y la carpeta `SoundStock`. Esta última contiene `manage.py`; por eso se ejecuta `cd SoundStock` una sola vez. La carpeta de código `SoundStock/SoundStock` es normal en Django.
+
 Para consultar rápidamente los comandos de Faker y la ubicación de cada archivo, abre [GUIA_FAKER_Y_ARCHIVOS.txt](GUIA_FAKER_Y_ARCHIVOS.txt).
 
 ## Construcción desde cero: comandos en el orden solicitado
@@ -214,7 +216,7 @@ Envía ese enlace, no solo la página principal del repositorio: `main` conserva
 
 ## Abrir la entrega existente
 
-La carpeta local preparada **ya trae** las apps, el código, las migraciones y una base local con datos de muestra. El ZIP de entrega omite la base local y los secretos; si partes del ZIP, crea tu administrador y carga los datos con los pasos 14–16. En una terminal nueva de VS Code, desde esta carpeta exterior ya preparada, ejecuta:
+La carpeta local preparada **ya trae** las apps, el código, las migraciones y una base local con datos de muestra. El ZIP trae el código y las migraciones, pero omite `venv`, la base local y los secretos. Si partes del ZIP, primero ejecuta `python -m venv venv` desde la carpeta exterior. Después, en una terminal CMD de VS Code, ejecuta:
 
 ```cmd
 cmd
@@ -227,9 +229,9 @@ python manage.py test
 python manage.py runserver 127.0.0.1:8000
 ```
 
-La cuenta local inicial está en `ACCESO_LOCAL.txt`, fuera del proyecto. Si el servidor ya está abierto en el puerto 8000, entra directamente por el navegador; no abras una segunda instancia en el mismo puerto. Si copias el código sin `db.sqlite3`, ejecuta `python manage.py migrate` y `python manage.py createsuperuser` antes de cargar datos.
+La cuenta inicial de la copia preparada está en `ACCESO_LOCAL.txt`, fuera del proyecto; el ZIP no la incluye. Si extraes el ZIP y creas una base nueva, ejecuta `python manage.py createsuperuser` para tener acceso al administrador. Si el servidor ya está abierto en el puerto 8000, entra directamente por el navegador; no abras una segunda instancia en el mismo puerto.
 
-Para detener el servidor que dejé abierto en segundo plano y luego iniciarlo desde tu propia terminal de VS Code, ejecuta esto desde la carpeta exterior:
+Solo en la copia local preparada, para detener el servidor que dejé abierto en segundo plano y luego iniciarlo desde tu propia terminal de VS Code, ejecuta esto desde la carpeta exterior:
 
 ```cmd
 powershell -ExecutionPolicy Bypass -File detener_servidor.ps1
