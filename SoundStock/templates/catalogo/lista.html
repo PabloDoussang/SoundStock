@@ -1,0 +1,17 @@
+{% extends 'base.html' %}{% block contenido %}
+<div class="encabezado"><div><p class="etiqueta">CATÁLOGO</p><h1>Productos</h1><p>{{ total }} resultado{{ total|pluralize }}</p></div>
+<div class="acciones"><a class="boton secundario" href="{% url 'exportar' 'productos' %}">Exportar CSV</a>
+{% if user.rol != 'Consulta' %}<a class="boton" href="{% url 'producto_crear' %}">+ Producto</a>{% endif %}</div></div>
+<section class="panel"><form method="get" class="filtros"><input name="q" placeholder="Buscar nombre, SKU o ubicación" value="{{ request.GET.q }}">
+<select name="categoria"><option value="">Todas las categorías</option>{% for categoria in categorias %}<option value="{{ categoria.pk }}" {% if request.GET.categoria == categoria.pk|stringformat:'s' %}selected{% endif %}>{{ categoria.nombre }}</option>{% endfor %}</select>
+<select name="estado"><option value="">Todo el stock</option><option value="bajo" {% if request.GET.estado == 'bajo' %}selected{% endif %}>Stock bajo</option><option value="agotado" {% if request.GET.estado == 'agotado' %}selected{% endif %}>Agotado</option></select>
+<select name="archivados"><option value="0">Activos</option><option value="1" {% if request.GET.archivados == '1' %}selected{% endif %}>Archivados</option></select>
+<button>Filtrar</button><a href="{% url 'productos' %}">Limpiar</a></form>
+<div class="tabla"><table><thead><tr><th>SKU</th><th>Producto</th><th>Categoría</th><th>Ubicación</th><th>Stock</th><th>Mínimo</th><th>Estado</th><th>Acciones</th></tr></thead><tbody>
+{% for p in pagina %}<tr><td><strong>{{ p.codigo }}</strong></td><td>{{ p.nombre }}</td><td>{{ p.categoria.nombre }}</td><td>{{ p.ubicacion }}</td>
+<td>{{ p.stock }}</td><td>{{ p.stock_minimo }}</td><td>{{ p.estado_stock }}</td><td class="acciones">
+{% if user.rol != 'Consulta' and p.activo %}<a href="{% url 'movimiento_crear' %}?producto={{ p.pk }}">Stock</a> <a href="{% url 'producto_editar' p.pk %}">Editar</a>{% endif %}
+{% if user.rol == 'Administrador' %}<form method="post" action="{% url 'producto_archivar' p.pk %}">{% csrf_token %}<button>{% if p.activo %}Archivar{% else %}Reactivar{% endif %}</button></form>
+<a href="{% url 'producto_eliminar' p.pk %}">Eliminar</a>{% endif %}</td></tr>
+{% empty %}<tr><td colspan="8">No hay productos que coincidan.</td></tr>{% endfor %}</tbody></table></div>
+{% include 'paginacion.html' %}</section>{% endblock %}

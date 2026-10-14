@@ -1,0 +1,3 @@
+{% extends 'base.html' %}{% block contenido %}<section class="panel formulario"><h1>{{ titulo }}</h1>
+<p>El stock se modifica desde Movimientos para conservar el historial.</p><form method="post">{% csrf_token %}{{ form.as_p }}<button class="boton">Guardar</button> <a href="{% url 'productos' %}">Cancelar</a></form>
+</section>{% endblock %}

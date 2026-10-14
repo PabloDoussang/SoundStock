@@ -1,0 +1,4 @@
+{% extends 'base.html' %}{% block contenido %}<section class="panel formulario"><h1>Registrar movimiento</h1>
+<p>Entrada suma unidades, salida resta y ajuste fija el saldo físico contado. El historial conserva los saldos anterior y posterior.</p>
+<form method="post">{% csrf_token %}{{ form.as_p }}<button class="boton">Guardar movimiento</button> <a href="{% url 'movimientos' %}">Cancelar</a></form>
+<p>Se muestran los primeros 100 SKU. Para operar otro producto, ábrelo desde la lista de productos.</p></section>{% endblock %}

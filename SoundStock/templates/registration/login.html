@@ -1,0 +1,4 @@
+{% extends 'base.html' %}{% block titulo %}Ingresar · SoundStock{% endblock %}{% block contenido %}
+<section class="panel acceso"><h1>Ingresar a la bodega</h1><p>Usa la cuenta administradora creada en la terminal.</p>
+<form method="post">{% csrf_token %}{{ form.as_p }}<input type="hidden" name="next" value="{{ next }}"><button class="boton">Ingresar</button></form>
+</section>{% endblock %}

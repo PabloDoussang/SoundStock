@@ -1,0 +1,9 @@
+{% extends 'base.html' %}{% block contenido %}<div class="encabezado"><div><p class="etiqueta">TRAZABILIDAD</p><h1>Movimientos</h1><p>{{ total }} registro{{ total|pluralize }}</p></div>
+<div class="acciones"><a class="boton secundario" href="{% url 'exportar' 'movimientos' %}?{{ request.GET.urlencode }}">Exportar CSV</a>{% if user.rol != 'Consulta' %}<a class="boton" href="{% url 'movimiento_crear' %}">+ Movimiento</a>{% endif %}</div></div>
+<section class="panel"><form method="get" class="filtros"><input name="q" placeholder="Buscar producto, SKU o motivo" value="{{ request.GET.q }}">
+<select name="tipo"><option value="">Todos los tipos</option>{% for value,label in tipos %}<option value="{{ value }}" {% if request.GET.tipo == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select>
+<label>Desde <input type="date" name="desde" value="{{ request.GET.desde }}"></label><label>Hasta <input type="date" name="hasta" value="{{ request.GET.hasta }}"></label>
+<button>Filtrar</button><a href="{% url 'movimientos' %}">Limpiar</a></form><div class="tabla"><table><thead><tr><th>ID</th><th>Fecha</th><th>Producto</th><th>Tipo</th><th>Anterior</th><th>Variación</th><th>Posterior</th><th>Usuario</th><th>Motivo / destino</th></tr></thead><tbody>
+{% for m in pagina %}<tr><td>MOV-{{ m.pk }}</td><td>{{ m.fecha|date:'d/m/Y H:i' }}</td><td>{{ m.producto.codigo }}</td><td>{{ m.get_tipo_display }}</td>
+<td>{{ m.anterior }}</td><td>{{ m.variacion }}</td><td>{{ m.posterior }}</td><td>{{ m.usuario.username }}</td><td>{{ m.motivo }}{% if m.destino %}<small>{{ m.destino }}</small>{% endif %}</td></tr>
+{% empty %}<tr><td colspan="9">Todavía no hay movimientos.</td></tr>{% endfor %}</tbody></table></div>{% include 'paginacion.html' %}</section>{% endblock %}

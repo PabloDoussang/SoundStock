@@ -1,0 +1,4 @@
+{% extends 'base.html' %}{% block contenido %}<section class="panel formulario"><h1>Eliminar producto</h1>
+<p>¿Eliminar {{ producto.codigo }} · {{ producto.nombre }}? Solo se permite si no tiene stock ni historial.</p>
+<form method="post">{% csrf_token %}<button class="boton peligro">Eliminar</button> <a href="{% url 'productos' %}">Cancelar</a></form>
+</section>{% endblock %}

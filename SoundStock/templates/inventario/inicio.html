@@ -1,0 +1,11 @@
+{% extends 'base.html' %}{% block contenido %}
+<div class="encabezado"><div><p class="etiqueta">BODEGA CENTRAL</p><h1>Resumen de inventario</h1><p>Productos, existencias y operaciones de SoundStock.</p></div>
+{% if user.rol != 'Consulta' %}<a class="boton" href="{% url 'movimiento_crear' %}">+ Registrar movimiento</a>{% endif %}</div>
+<div class="tarjetas"><article><strong>{{ cantidad_productos }}</strong><span>Productos activos</span></article>
+<article><strong>{{ unidades }}</strong><span>Unidades disponibles</span></article>
+<article><strong>{{ alertas }}</strong><span>Alertas de stock</span></article>
+<article><strong>{{ movimientos_hoy }}</strong><span>Movimientos hoy</span></article></div>
+<section class="panel"><div class="encabezado"><h2>Actividad reciente</h2><a href="{% url 'movimientos' %}">Ver historial</a></div>
+<div class="tabla"><table><thead><tr><th>Fecha</th><th>Producto</th><th>Tipo</th><th>Variación</th><th>Responsable</th></tr></thead>
+<tbody>{% for m in recientes %}<tr><td>{{ m.fecha|date:'d/m/Y H:i' }}</td><td>{{ m.producto.nombre }}</td><td>{{ m.get_tipo_display }}</td>
+<td>{{ m.variacion }}</td><td>{{ m.usuario.username }}</td></tr>{% empty %}<tr><td colspan="5">Todavía no hay movimientos.</td></tr>{% endfor %}</tbody></table></div></section>{% endblock %}

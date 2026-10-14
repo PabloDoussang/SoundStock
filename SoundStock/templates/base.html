@@ -1,0 +1,13 @@
+{% load static %}<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{% block titulo %}SoundStock{% endblock %}</title><link rel="stylesheet" href="{% static 'sitio.css' %}"></head>
+<body>
+<header><a class="marca" href="{% url 'inicio' %}">SoundStock <span>Music Pro · Bodega</span></a>
+{% if user.is_authenticated %}<nav aria-label="Principal">
+<a href="{% url 'inicio' %}">Resumen</a><a href="{% url 'productos' %}">Productos</a>
+<a href="{% url 'movimientos' %}">Movimientos</a><a href="{% url 'reportes' %}">Reportes</a>
+<a href="{% url 'ubicaciones' %}">Ubicaciones</a>
+{% if user.is_staff %}<a href="{% url 'admin:index' %}">Django Admin</a>{% endif %}
+</nav><div class="cuenta"><span>{{ user.username }} · {{ user.rol }}</span><form action="{% url 'logout' %}" method="post">{% csrf_token %}<button>Salir</button></form></div>{% endif %}</header>
+<main>{% if messages %}<div aria-live="polite">{% for message in messages %}<p class="mensaje {{ message.tags }}">{{ message }}</p>{% endfor %}</div>{% endif %}
+{% block contenido %}{% endblock %}</main><footer>SoundStock · Django + SQLite</footer></body></html>

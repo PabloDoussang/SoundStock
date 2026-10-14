@@ -1,0 +1,6 @@
+{% extends 'base.html' %}{% block contenido %}<div class="encabezado"><div><p class="etiqueta">ANÁLISIS</p><h1>Reportes</h1><p>{{ movimientos }} movimientos registrados</p></div><a class="boton secundario" href="{% url 'exportar' 'movimientos' %}">Exportar historial</a></div>
+<div class="tarjetas"><article><strong>{{ entradas }}</strong><span>Entradas</span></article><article><strong>{{ salidas }}</strong><span>Salidas</span></article><article><strong>{{ ajustes }}</strong><span>Ajustes</span></article></div>
+<section class="panel"><h2>Stock por categoría</h2><div class="tabla"><table><thead><tr><th>Categoría</th><th>Productos</th><th>Unidades</th></tr></thead><tbody>
+{% for c in categorias %}<tr><td>{{ c.categoria__nombre }}</td><td>{{ c.productos }}</td><td>{{ c.unidades }}</td></tr>{% empty %}<tr><td colspan="3">No hay datos.</td></tr>{% endfor %}</tbody></table></div></section>
+<section class="panel"><h2>Últimos movimientos diarios</h2><div class="tabla"><table><thead><tr><th>Fecha</th><th>Tipo</th><th>Variación</th></tr></thead><tbody>
+{% for item in por_dia %}<tr><td>{{ item.dia }}</td><td>{{ item.tipo }}</td><td>{{ item.unidades }}</td></tr>{% empty %}<tr><td colspan="3">No hay datos.</td></tr>{% endfor %}</tbody></table></div></section>{% endblock %}

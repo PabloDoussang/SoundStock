@@ -1,0 +1,52 @@
+{
+  "motor": "SQLite temporal independiente",
+  "python": "3.13.14",
+  "sqlite": "3.50.4",
+  "cargas": [
+    {
+      "cantidad": 100,
+      "segundos": 1.274,
+      "registros_guardados": 100,
+      "integridad": [
+        "ok"
+      ],
+      "errores_claves_foraneas": [],
+      "migraciones_pendientes": 0,
+      "seeder": "Seeder terminado: 100 productos creados, 0 actualizados; 100 almacenados; 0.02 s.",
+      "repeticion_sin_duplicados": true
+    },
+    {
+      "cantidad": 1000,
+      "segundos": 0.87,
+      "registros_guardados": 1000,
+      "integridad": [
+        "ok"
+      ],
+      "errores_claves_foraneas": [],
+      "migraciones_pendientes": 0,
+      "seeder": "Seeder terminado: 900 productos creados, 100 actualizados; 1000 almacenados; 0.09 s."
+    },
+    {
+      "cantidad": 100000,
+      "segundos": 10.679,
+      "registros_guardados": 100000,
+      "integridad": [
+        "ok"
+      ],
+      "errores_claves_foraneas": [],
+      "migraciones_pendientes": 0,
+      "seeder": "Procesados 100,000 de 100,000\nSeeder terminado: 99000 productos creados, 1000 actualizados; 100000 almacenados; 9.84 s."
+    },
+    {
+      "cantidad": 1000000,
+      "segundos": 140.051,
+      "registros_guardados": 1000000,
+      "integridad": [
+        "ok"
+      ],
+      "errores_claves_foraneas": [],
+      "migraciones_pendientes": 0,
+      "seeder": "Procesados 100,000 de 1,000,000\nProcesados 200,000 de 1,000,000\nProcesados 300,000 de 1,000,000\nProcesados 400,000 de 1,000,000\nProcesados 500,000 de 1,000,000\nProcesados 600,000 de 1,000,000\nProcesados 700,000 de 1,000,000\nProcesados 800,000 de 1,000,000\nProcesados 900,000 de 1,000,000\nProcesados 1,000,000 de 1,000,000\nSeeder terminado: 900000 productos creados, 100000 actualizados; 1000000 almacenados; 139.11 s."
+    }
+  ]
+}
