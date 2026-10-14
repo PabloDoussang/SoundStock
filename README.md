@@ -6,7 +6,7 @@ Este proyecto toma el caso de bodega del primer ZIP (`SoundStock-main.zip`) y si
 
 Al extraer `SoundStock-main.zip` con **Extraer todo** de Windows, dentro de `SoundStock-main` deben quedar directamente `README.md` y la carpeta `SoundStock`. Esta última contiene `manage.py`; por eso se ejecuta `cd SoundStock` una sola vez. La carpeta de código `SoundStock/SoundStock` es normal en Django.
 
-Para consultar rápidamente los comandos de Faker y la ubicación de cada archivo, abre [GUIA_FAKER_Y_ARCHIVOS.txt](GUIA_FAKER_Y_ARCHIVOS.txt).
+Para encontrar los tres archivos `seed_...` con enlaces directos, abre [SEEDS.md](SEEDS.md). Para las cantidades de Faker y la ubicación del resto del proyecto, abre [GUIA_FAKER_Y_ARCHIVOS.txt](GUIA_FAKER_Y_ARCHIVOS.txt).
 
 ## Construcción desde cero: comandos en el orden solicitado
 

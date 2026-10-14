@@ -64,6 +64,7 @@ el millón a la base local que ves en Admin. Para llenarla, usa seed_productos.
 DÓNDE ENCONTRAR CADA COSA
 ------------------------
 README.md                              Pasos completos para VS Code y entrega.
+SEEDS.md                               Enlaces directos a los tres archivos seed.
 SoundStock/manage.py                   Comandos de Django.
 SoundStock/SoundStock/settings.py       Base SQLite y apps instaladas.
 SoundStock/usuarios/models.py          Modelo de usuarios y roles.
