@@ -3,6 +3,7 @@ from uuid import uuid4
 
 from django.core.exceptions import ValidationError
 from django.core.management import call_command
+from django.core.management.base import CommandError
 from django.db import IntegrityError, connection, transaction
 from django.db.migrations.executor import MigrationExecutor
 from django.test import Client, TestCase, override_settings
@@ -215,8 +216,20 @@ class SoundStockTests(TestCase):
         call_command('seed_usuarios', cantidad=10, lote=3, stdout=output)
         call_command('seed_usuarios', cantidad=10, lote=7, stdout=output)
         self.assertEqual(Usuario.objects.filter(username__startswith='demo_usuario_').count(), 10)
+        with self.assertRaises(CommandError):
+            call_command('seed_movimientos', cantidad=100, tipo='salida', stdout=output)
+        self.assertEqual(Movimiento.objects.count(), 11)
         call_command('seed_movimientos', cantidad=100, lote=19, stdout=output)
         stock = Producto.objects.get(codigo='DEMO-P-0000001').stock
         call_command('seed_movimientos', cantidad=100, lote=31, stdout=output)
         self.assertEqual(Producto.objects.get(codigo='DEMO-P-0000001').stock, stock)
-        self.assertEqual(Movimiento.objects.count(), 111)
+        call_command('seed_movimientos', cantidad=100, lote=19, tipo='salida', stdout=output)
+        salidas = Movimiento.objects.filter(tipo='salida', producto__codigo__startswith='DEMO-P-')
+        self.assertEqual(salidas.count(), 100)
+        self.assertFalse(salidas.filter(destino='').exists())
+        self.assertTrue(all(m.variacion < 0 and m.posterior >= 0 for m in salidas))
+        saldo = Producto.objects.get(codigo='DEMO-P-0000001').stock
+        self.assertLess(saldo, stock)
+        call_command('seed_movimientos', cantidad=100, lote=31, tipo='salida', stdout=output)
+        self.assertEqual(Producto.objects.get(codigo='DEMO-P-0000001').stock, saldo)
+        self.assertEqual(Movimiento.objects.count(), 211)

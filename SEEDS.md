@@ -12,8 +12,9 @@ Los archivos deben permanecer en `management/commands/` de cada app para que Dja
 cd SoundStock
 python manage.py seed_productos --cantidad 100
 python manage.py seed_usuarios --cantidad 20
-python manage.py seed_movimientos --cantidad 80
+python manage.py seed_movimientos --cantidad 80 --tipo entrada
+python manage.py seed_movimientos --cantidad 40 --tipo salida
 python manage.py verificar_bd
 ```
 
-El nombre correcto es `seed_productos`, en plural, y la opción es `--cantidad`, en minúsculas. Carga primero los productos y después los movimientos. `seed_productos` crea los productos con stock cero; `seed_movimientos` registra entradas y aumenta el stock. En el ejemplo, 20 quedan agotados y 80 reciben stock, lo que permite probar los distintos filtros. Los datos quedan en `SoundStock/db.sqlite3`; repetir los comandos reconoce los registros existentes y no los duplica.
+El nombre correcto es `seed_productos`, en plural, y la opción es `--cantidad`, en minúsculas. Carga primero los productos, después las entradas y finalmente las salidas. `seed_productos` crea los productos con stock cero; las entradas aumentan el stock y las salidas lo descuentan sin dejarlo negativo. En el ejemplo, 20 quedan agotados, 80 reciben stock y 40 de estos registran una venta. Los datos quedan en `SoundStock/db.sqlite3`; repetir los comandos reconoce los registros existentes y no los duplica.

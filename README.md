@@ -164,12 +164,13 @@ Ejecuta estos comandos **después de `cd SoundStock`**, desde la carpeta que con
 ```cmd
 python manage.py seed_productos --cantidad 100
 python manage.py seed_usuarios --cantidad 20
-python manage.py seed_movimientos --cantidad 80
+python manage.py seed_movimientos --cantidad 80 --tipo entrada
+python manage.py seed_movimientos --cantidad 40 --tipo salida
 ```
 
 Para cargar 1.000 productos, por ejemplo, ejecuta `python manage.py seed_productos --cantidad 1000`. Ejecutar primero 100 y después 1.000 deja **1.000 productos de prueba**, porque el comando reconoce los anteriores y no los duplica. Si quieres un segundo grupo adicional, usa otro prefijo: `python manage.py seed_productos --cantidad 500 --prefijo OTRO`.
 
-Estos comandos cargan registros en `db.sqlite3`; no crean nuevos archivos llamados `seed`. `seed_usuarios` crea cuentas ficticias desactivadas y `seed_movimientos` crea entradas de stock. Los productos sin movimientos quedan agotados; cargar movimientos para una parte de ellos permite probar estados de stock distintos. Para movimientos, carga primero al menos la misma cantidad de productos con el mismo prefijo. Verifica lo guardado con:
+Estos comandos cargan registros en `db.sqlite3`; no crean nuevos archivos llamados `seed`. `seed_usuarios` crea cuentas ficticias desactivadas. `seed_movimientos` crea entradas por defecto; `--tipo salida` registra ventas ficticias con destino y descuenta una cantidad que no supera el stock. Ejecuta primero las entradas para esos productos. Repetir una carga del mismo tipo no duplica movimientos ni vuelve a alterar el stock. Los productos sin movimientos quedan agotados; cargar movimientos para una parte de ellos permite probar estados de stock distintos. Para movimientos, carga primero al menos la misma cantidad de productos con el mismo prefijo. Verifica lo guardado con:
 
 ```cmd
 python manage.py verificar_bd
