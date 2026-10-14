@@ -24,7 +24,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY')
 if not SECRET_KEY:
-    secret_file = BASE_DIR / '.local-secret'
+    secret_file = BASE_DIR / 'archivos_de_apoyo' / '.local-secret'
+    secret_file.parent.mkdir(parents=True, exist_ok=True)
     if not secret_file.exists():
         secret_file.write_text(get_random_secret_key(), encoding='utf-8')
     SECRET_KEY = secret_file.read_text(encoding='utf-8')

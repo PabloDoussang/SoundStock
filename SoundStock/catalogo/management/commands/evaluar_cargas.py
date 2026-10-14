@@ -15,7 +15,7 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('--cantidades', nargs='+', type=int, default=[100, 1000, 100000, 1000000])
-        parser.add_argument('--salida', type=Path, default=settings.BASE_DIR / 'RESULTADOS_CARGAS.json')
+        parser.add_argument('--salida', type=Path, default=settings.BASE_DIR / 'archivos_de_apoyo' / 'RESULTADOS_CARGAS.json')
 
     def handle(self, *args, **options):
         cantidades = options['cantidades']

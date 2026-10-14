@@ -9,4 +9,4 @@ detener_servidor.ps1
 .env
 __pycache__/
 *.py[cod]
-SoundStock/VERIFICACION_BD.json
+SoundStock/archivos_de_apoyo/VERIFICACION_BD.json

@@ -42,7 +42,7 @@ Los usuarios ficticios quedan desactivados; no reemplazan al administrador.
 
 COMPROBAR LOS DATOS
 -------------------
-    python manage.py verificar_bd
+    python manage.py verificar_bd --salida archivos_de_apoyo\VERIFICACION_BD.json
 
 Para verlos en la página, ejecuta "python manage.py runserver 127.0.0.1:8000"
 y abre http://127.0.0.1:8000/admin/.
@@ -52,8 +52,8 @@ PRUEBA DE LAS CUATRO CANTIDADES DE LA PAUTA
     python manage.py evaluar_cargas
 
 Prueba 100, 1.000, 100.000 y 1.000.000 de productos y guarda el resultado
-en RESULTADOS_CARGAS.json. Usa una base temporal: no añade el millón a la
-base local que ves en Admin. Para llenarla, usa seed_productos como arriba.
+en archivos_de_apoyo/RESULTADOS_CARGAS.json. Usa una base temporal: no añade
+el millón a la base local que ves en Admin. Para llenarla, usa seed_productos.
 
 DÓNDE ENCONTRAR CADA COSA
 ------------------------
@@ -75,9 +75,19 @@ SoundStock/catalogo/management/commands/evaluar_cargas.py
                                        Prueba hasta un millón de registros.
 SoundStock/inventario/management/commands/verificar_bd.py
                                        Comprueba conexión, conteos e integridad.
-SoundStock/DIAGRAMA_BD.md              Diagrama y diccionario de datos.
-SoundStock/IMAGEN_MODELO_BD.png        Imagen para entregar en la plataforma.
-SoundStock/RESULTADOS_CARGAS.json      Resultados de las cuatro cargas.
+SoundStock/archivos_de_apoyo/DIAGRAMA_BD.md
+                                       Diagrama y diccionario de datos.
+SoundStock/archivos_de_apoyo/IMAGEN_MODELO_BD.png
+                                       Imagen para entregar en la plataforma.
+SoundStock/archivos_de_apoyo/RESULTADOS_CARGAS.json
+                                       Resultados de las cuatro cargas.
+SoundStock/archivos_de_apoyo/VERIFICACION_BD.json
+                                       Comprobación de la base local.
+SoundStock/archivos_de_apoyo/.local-secret
+                                       Clave privada local; no se entrega.
+SoundStock/archivos_de_apoyo/.gitignore
+                                       Excluye los archivos privados de esa carpeta.
+.gitignore                             Protege la base y el entorno virtual.
 SoundStock/inventario/tests.py         Pruebas del Admin y de la base.
 SoundStock/templates/                  Páginas HTML.
 SoundStock/static/                     Estilos.

@@ -128,7 +128,7 @@ pip install Pillow
 python manage.py diagrama_bd
 ```
 
-Abre [DIAGRAMA_BD.md](SoundStock/DIAGRAMA_BD.md) con la vista previa de Markdown de VS Code. El diagrama Mermaid y su diccionario de datos se generan desde los modelos reales; muestran entidades, atributos, claves primarias, claves foráneas, valores únicos y relaciones. El mismo comando crea [IMAGEN_MODELO_BD.png](SoundStock/IMAGEN_MODELO_BD.png) con las cuatro tablas de negocio para subir como imagen a la plataforma. Vuelve a ejecutar el comando después de cambiar modelos.
+Abre [DIAGRAMA_BD.md](SoundStock/archivos_de_apoyo/DIAGRAMA_BD.md) con la vista previa de Markdown de VS Code. El diagrama Mermaid y su diccionario de datos se generan desde los modelos reales; muestran entidades, atributos, claves primarias, claves foráneas, valores únicos y relaciones. El mismo comando crea [IMAGEN_MODELO_BD.png](SoundStock/archivos_de_apoyo/IMAGEN_MODELO_BD.png) con las cuatro tablas de negocio para subir como imagen a la plataforma. Vuelve a ejecutar el comando después de cambiar modelos.
 
 ### 13. Django Admin y sus CRUD
 
@@ -177,7 +177,7 @@ La [guía TXT](GUIA_FAKER_Y_ARCHIVOS.txt) contiene los comandos para 100, 1.000,
 python manage.py evaluar_cargas
 ```
 
-Este comando aplica las migraciones en una **base SQLite temporal independiente**, ejecuta secuencialmente cargas de **100, 1.000, 100.000 y 1.000.000 productos**, verifica el número realmente almacenado, la integridad, las relaciones y las migraciones. También repite la primera carga para comprobar que no duplica registros. Guarda tiempos y resultados en [RESULTADOS_CARGAS.json](SoundStock/RESULTADOS_CARGAS.json). Puede tardar varios minutos; no llena la base de la aplicación que usas a diario.
+Este comando aplica las migraciones en una **base SQLite temporal independiente**, ejecuta secuencialmente cargas de **100, 1.000, 100.000 y 1.000.000 productos**, verifica el número realmente almacenado, la integridad, las relaciones y las migraciones. También repite la primera carga para comprobar que no duplica registros. Guarda tiempos y resultados en [RESULTADOS_CARGAS.json](SoundStock/archivos_de_apoyo/RESULTADOS_CARGAS.json). Puede tardar varios minutos; no llena la base de la aplicación que usas a diario.
 
 Para hacer solo las primeras dos cargas en una demostración corta:
 
@@ -191,10 +191,10 @@ python manage.py evaluar_cargas --cantidades 100 1000
 python manage.py check
 python manage.py makemigrations --check --dry-run
 python manage.py test
-python manage.py verificar_bd
+python manage.py verificar_bd --salida archivos_de_apoyo\VERIFICACION_BD.json
 ```
 
-Las pruebas incluyen conexión SQLite, historial de migraciones, permisos, CRUD, búsquedas, stock, restricciones, Admin, catálogo original y repetición de seeders. `VERIFICACION_BD.json` contiene el resultado de la base local preparada.
+Las pruebas incluyen conexión SQLite, historial de migraciones, permisos, CRUD, búsquedas, stock, restricciones, Admin, catálogo original y repetición de seeders. `archivos_de_apoyo/VERIFICACION_BD.json` contiene el resultado de la base local preparada.
 
 ### 18. Ejecutar la aplicación
 
@@ -206,11 +206,11 @@ Abre `http://127.0.0.1:8000/` para el resumen, productos, movimientos, reportes 
 
 ### 19. Preparar la entrega de la Evaluación 2
 
-La pauta pide subir a la plataforma [IMAGEN_MODELO_BD.png](SoundStock/IMAGEN_MODELO_BD.png) y el enlace de un repositorio **público** de GitHub con el último commit. La imagen se regenera con el comando del paso 12. Esta versión del proyecto está en la rama independiente `evaluacion-2-desde-cero` del repositorio público:
+La pauta pide subir a la plataforma [IMAGEN_MODELO_BD.png](SoundStock/archivos_de_apoyo/IMAGEN_MODELO_BD.png) y el enlace de un repositorio **público** de GitHub con el último commit. La imagen se regenera con el comando del paso 12. Esta versión del proyecto está en la rama independiente `evaluacion-2-desde-cero` del repositorio público:
 
 https://github.com/PabloDoussang/SoundStock/tree/evaluacion-2-desde-cero
 
-Envía ese enlace, no solo la página principal del repositorio: `main` conserva la versión anterior. En GitHub, abre la rama y usa la sección **Commits** para mostrar el último cambio. El archivo `.gitignore` excluye el entorno virtual, la base local y los secretos.
+Envía ese enlace, no solo la página principal del repositorio: `main` conserva la versión anterior. En GitHub, abre la rama y usa la sección **Commits** para mostrar el último cambio. El `.gitignore` principal permanece en la raíz para excluir el entorno virtual, la base local y los secretos; otro `.gitignore` dentro de `archivos_de_apoyo` protege los archivos locales de esa carpeta.
 
 ## Abrir la entrega existente
 
@@ -240,10 +240,10 @@ powershell -ExecutionPolicy Bypass -File detener_servidor.ps1
 - `SoundStock/SoundStock/settings.py`: apps, conexión SQLite y usuario personalizado.
 - `SoundStock/usuarios/models.py`, `SoundStock/catalogo/models.py`, `SoundStock/inventario/models.py`: modelos y relaciones.
 - Las carpetas `migrations/`: historial generado y aplicado por Django.
-- `SoundStock/DIAGRAMA_BD.md`: diagrama generado desde los modelos.
-- `SoundStock/IMAGEN_MODELO_BD.png`: imagen del modelo solicitada por la pauta.
+- `SoundStock/archivos_de_apoyo/DIAGRAMA_BD.md`: diagrama generado desde los modelos.
+- `SoundStock/archivos_de_apoyo/IMAGEN_MODELO_BD.png`: imagen del modelo solicitada por la pauta.
 - Los tres `admin.py`: CRUD, filtros, búsquedas y personalización.
 - `catalogo/management/commands/seed_productos.py`: patrón de `seed_empleado` con Faker, categorías compartidas, SKU estable y lotes.
-- `SoundStock/RESULTADOS_CARGAS.json`: evidencia de las cuatro pruebas de volumen.
+- `SoundStock/archivos_de_apoyo/RESULTADOS_CARGAS.json`: evidencia de las cuatro pruebas de volumen.
 
 La documentación de los ZIP adjuntos se usó como referencia técnica. Esta guía describe el proyecto nuevo y los criterios enviados para esta evaluación.

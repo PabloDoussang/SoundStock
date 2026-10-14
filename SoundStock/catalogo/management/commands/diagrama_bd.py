@@ -112,11 +112,13 @@ class Command(BaseCommand):
             '- El SKU, el nombre de categoría, el usuario y el token de movimiento son únicos.',
             '- La base comprueba que `posterior = anterior + variacion` y que el tipo coincida con el signo.',
             '- El servicio registra el movimiento y actualiza el stock en la misma transacción.', '']
-        target = settings.BASE_DIR / 'DIAGRAMA_BD.md'
+        carpeta = settings.BASE_DIR / 'archivos_de_apoyo'
+        carpeta.mkdir(parents=True, exist_ok=True)
+        target = carpeta / 'DIAGRAMA_BD.md'
         target.write_text('\n'.join(lines), encoding='utf-8')
         self.stdout.write(self.style.SUCCESS(f'Diagrama creado: {target}'))
         tablas_negocio = ['catalogo_categoria', 'catalogo_producto', 'usuarios_usuario', 'inventario_movimiento']
         modelos_negocio = {model._meta.db_table: model for model in models if model._meta.db_table in tablas_negocio}
-        imagen = settings.BASE_DIR / 'IMAGEN_MODELO_BD.png'
+        imagen = carpeta / 'IMAGEN_MODELO_BD.png'
         generar_imagen(modelos_negocio, imagen)
         self.stdout.write(self.style.SUCCESS(f'Imagen para entregar: {imagen}'))
