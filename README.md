@@ -99,7 +99,7 @@ Después de escribir los modelos:
 python manage.py makemigrations usuarios catalogo inventario
 ```
 
-Los archivos `0001_initial.py` están guardados en `migrations/` de cada app. Django dividió la migración inicial de `inventario` en `0001_initial.py` y `0002_initial.py` para resolver la relación con el usuario personalizado.
+Los archivos `0001_initial.py` están guardados en `migrations/` de cada app. Django dividió la migración inicial de `inventario` en `0001_initial.py` y `0002_initial.py` para resolver la relación con el usuario personalizado. `usuarios/0002_cuenta_demostracion.py` crea la cuenta de acceso local al ejecutar `migrate` en una base nueva.
 
 ### 11. Aplicar migraciones y mostrar su historial
 
@@ -143,6 +143,8 @@ Para crear otra cuenta administradora desde la terminal:
 ```cmd
 python manage.py createsuperuser
 ```
+
+La cuenta de demostración usa **Pablo Doussang** tanto en `/ingresar/` como en `/admin/`. Su contraseña está en `ACCESO_LOCAL.txt`, en la carpeta exterior `SoundStock-main`. Ambas páginas utilizan la misma autenticación de Django.
 
 Después de iniciar el servidor, entra en `http://127.0.0.1:8000/admin/`. Puedes crear, consultar, modificar y eliminar usuarios, categorías, productos y movimientos. Para conservar la consistencia, un producto con stock o historial no se elimina; un movimiento solo se corrige o elimina si es el último de ese producto. El Admin recalcula el stock en la misma transacción.
 
@@ -231,7 +233,7 @@ python manage.py test
 python manage.py runserver 127.0.0.1:8000
 ```
 
-La cuenta inicial de la copia preparada está en `ACCESO_LOCAL.txt`, fuera del proyecto; el ZIP no la incluye. Si extraes el ZIP y creas una base nueva, ejecuta `python manage.py createsuperuser` para tener acceso al administrador. Si el servidor ya está abierto en el puerto 8000, entra directamente por el navegador; no abras una segunda instancia en el mismo puerto.
+El ZIP incluye `ACCESO_LOCAL.txt` en la carpeta exterior. Al ejecutar `python manage.py migrate` en una base nueva, la migración crea automáticamente la cuenta indicada allí. Puedes usarla tanto para la página normal como para Django Admin; no necesitas ejecutar `createsuperuser` para el primer acceso. Es una cuenta de demostración para uso local: cambia la contraseña si expones el servidor fuera de tu computador. Si el servidor ya está abierto en el puerto 8000, entra directamente por el navegador; no abras una segunda instancia en el mismo puerto.
 
 Solo en la copia local preparada, para detener el servidor que dejé abierto en segundo plano y luego iniciarlo desde tu propia terminal de VS Code, ejecuta esto desde la carpeta exterior:
 
