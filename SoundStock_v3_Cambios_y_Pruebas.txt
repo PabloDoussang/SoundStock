@@ -1,6 +1,7 @@
 ﻿SOUNDSTOCK V3
 CAMBIOS REALIZADOS Y GUÍA DE PRUEBAS
-Fecha: 6 de noviembre de 2026, Chile
+Fecha inicial: 6 de noviembre de 2026, Chile
+Última actualización: 7 de noviembre de 2026, Chile
 
 Entrega principal: SoundStock_v3.zip
 Este TXT se entrega por separado. El README completo permanece dentro del ZIP.
@@ -130,8 +131,9 @@ El nombre del ZIP cambia; las carpetas internas de Django conservan sus nombres.
   estructura del paquete y funcionamiento de la interfaz.
 - Se actualizó la evidencia técnica de la revisión y el README.
 - Se creó este TXT aparte y se cambió el nombre de la entrega a SoundStock_v3.zip.
-- No se agregaron cambios al código funcional respecto de la última versión
-  HTML manual. Se conservaron modelos, migraciones, rutas, menú, diseño y gráficos.
+- El último ajuste funcional se concentra en los formularios y vistas de sesión:
+  destino en la misma pestaña y avisos de inicio/cierre. Se conservan los modelos,
+  migraciones, rutas, orden del menú, diseño y gráficos.
 
 2.9. Corrección de la lectura de archivos en Windows
 
@@ -147,7 +149,7 @@ Se corrigieron las dos lecturas en SoundStock/inventario/tests_e3.py:
 Una corresponde al análisis de archivos Python y otra a la revisión de las
 plantillas HTML. Se conservan sus comprobaciones y se añade una regresión que
 simula cp1252: falla con la versión anterior y aprueba con la corregida.
-El total actual es de 59 pruebas aprobadas. Esta comprobación se realizó en el
+El total actual es de 62 pruebas aprobadas. Esta comprobación se realizó en el
 entorno Linux de revisión simulando la codificación de Windows de la captura.
 
 Para actualizar tu copia sin reemplazar tus datos:
@@ -158,9 +160,32 @@ Para actualizar tu copia sin reemplazar tus datos:
 
    python manage.py test --verbosity 2
 
-Resultado esperado: Ran 59 tests y OK. Se conservan tu db.sqlite3, los modelos,
+Resultado esperado: Ran 62 tests y OK. Se conservan tu db.sqlite3, los modelos,
 las migraciones y las reglas del sistema; no hace falta reconfigurar Windows.
 También puedes actualizar README y las evidencias desde el ZIP corregido.
+
+2.10. Sesiones en la misma pestaña y avisos
+
+Se agregó target="_self" a los formularios de ingreso y salida y formtarget="_self"
+a sus botones. El login declara su URL de envío explícita. Las vistas muestran
+Sesión iniciada correctamente y Sesión cerrada correctamente mediante los avisos
+del sistema. La salida sigue siendo POST con CSRF; no se abre una ventana aparte.
+
+Se comprobó en Chromium con y sin JavaScript y simulando un destino global
+_blank: ambos flujos conservaron la misma pestaña, con cero pestañas nuevas,
+avisos visibles que no se repiten al recargar y bloqueo del acceso tras salir.
+Se añadieron tres pruebas automáticas; el total actualizado es de 62 aprobadas.
+
+Para actualizar una copia existente, conserva db.sqlite3 y tu clave secreta local.
+Los archivos funcionales modificados en este ajuste son:
+SoundStock/usuarios/views.py
+SoundStock/templates/base.html
+SoundStock/templates/registration/login.html
+También se actualiza SoundStock/inventario/tests_e3.py y la documentación/evidencia.
+No hacen falta migraciones nuevas por este cambio.
+
+Las respuestas a los 20 reportes de Bodega y las seis comprobaciones de seguridad
+se entregan en SoundStock_v3_Respuestas_Profesor.txt, junto con la matriz de requisitos.
 
 3. ARCHIVOS QUE CONVIENE ENTENDER
 
@@ -252,12 +277,13 @@ Esperado: todas las migraciones marcadas con [X], después de ejecutar migrate.
 
    python manage.py test --verbosity 2
 
-Esperado: 59 pruebas, resultado OK. La suite usa una base temporal independiente
+Esperado: 62 pruebas, resultado OK. La suite usa una base temporal independiente
 y la elimina al terminar; no utiliza tu base de trabajo como base de pruebas.
 
-Distribución de las 59 pruebas:
+Distribución de las 62 pruebas:
 - 10 de compatibilidad con el proyecto anterior.
 - 22 del caso Bodega E3.
+- 3 de avisos de autenticación, cierre de sesión y conservación de acceso seguro.
 - 19 de formularios HTML manuales, entradas inválidas, seguridad y compatibilidad UTF-8 con Windows.
 - 8 de indicadores, gráficos y presentación de datos.
 
@@ -292,6 +318,7 @@ Esperado: el sistema te envía a /ingresar/; no muestra la información protegid
 PRUEBA 02. LOGIN CORRECTO E INCORRECTO
 Prueba primero una contraseña incorrecta y después una cuenta válida.
 Esperado: error con credenciales inválidas; acceso al panel con las correctas.
+El ingreso debe conservar la misma pestaña y mostrar Sesión iniciada correctamente.
 Mostrar/Ocultar cambia la visibilidad del campo sin cambiar la contraseña.
 
 PRUEBA 03. CREAR Y EDITAR CATÁLOGOS
@@ -398,7 +425,9 @@ Intenta desactivarte o quitarte tu propio rol Administrador: debe impedirse.
 
 PRUEBA 17. LOGOUT Y OPERACIONES POST
 Presiona Salir y visita de nuevo /productos/.
-Esperado: vuelve a pedir el ingreso.
+Esperado: salida en la misma pestaña, aviso Sesión cerrada correctamente y
+solicitud de ingreso al volver a una página protegida. Los avisos no se repiten
+al recargar la página; no deben aparecer pestañas nuevas.
 Visitar /salir/ con la barra de direcciones usa GET y debe responder 405.
 Las URLs de revisar/despachar solicitudes y cambiar estados también requieren POST.
 GET puede mostrar formularios de edición o confirmación; no debe guardar ni borrar.
@@ -451,7 +480,7 @@ RESULTADO: APROBADO EN LAS COMPROBACIONES EJECUTADAS.
 - Django check: sin problemas.
 - makemigrations --check --dry-run: No changes detected.
 - showmigrations: todas las migraciones aplicadas.
-- Suite automática: 59 pruebas aprobadas, resultado OK.
+- Suite automática: 62 pruebas aprobadas, resultado OK.
 - Regresión de codificación: error cp1252 reproducido antes de la corrección
   y lectura UTF-8 comprobada después, conservando las validaciones originales.
 - pip check: No broken requirements found.
@@ -470,8 +499,11 @@ RESULTADO: APROBADO EN LAS COMPROBACIONES EJECUTADAS.
 - Errores JavaScript detectados durante el recorrido: ninguno.
 - Solicitudes a servicios externos durante el recorrido principal: ninguna.
 - Inspección visual del panel de escritorio/móvil y los errores de contraseña: OK.
-- Código funcional, rutas, menú, modelos, migraciones, CSS y JavaScript:
-  conservados respecto de la entrega HTML manual anterior.
+- Estructura, rutas, orden del menú, modelos, migraciones, CSS y JavaScript:
+  conservados. Formularios y vistas de sesión ajustados según la sección 2.10.
+- Login/logout en una misma pestaña, avisos y revocación del acceso: OK con
+  y sin JavaScript, incluso con un destino global _blank. Cero pestañas nuevas.
+- Las 20 consultas ORM y sus páginas de reportes: ejecutadas correctamente.
 
 Las evidencias de ejecución están dentro del ZIP en:
 SoundStock/archivos_de_apoyo/PRUEBAS_E3.txt
@@ -482,9 +514,10 @@ La integridad del ZIP y sus 105 nombres de archivo se comprobaron al empaquetarl
 Se excluyeron entornos virtuales, cachés, bases SQLite, la clave secreta local y
 las capturas internas de revisión.
 
-El recorrido de Chromium corresponde a la revisión visual anterior; esta
-corrección solo cambia pruebas de lectura de archivos y mantiene idéntico el
-código de la aplicación y sus recursos visuales.
+El recorrido general de CRUD y gráficos corresponde a la revisión visual
+anterior. En esta actualización se comprobó específicamente el inicio y cierre
+de sesión en Chromium, los avisos y el acceso protegido posterior. Se conserva
+la corrección UTF-8 para Windows y se añadieron tres pruebas de sesiones.
 
 Las pruebas que aparecen como realizadas arriba fueron ejecutadas en el entorno
 de revisión. El recorrido manual de la sección 6 está escrito para que lo hagas
