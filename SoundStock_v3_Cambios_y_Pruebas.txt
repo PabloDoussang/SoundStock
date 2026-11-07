@@ -1,0 +1,519 @@
+﻿SOUNDSTOCK V3
+CAMBIOS REALIZADOS Y GUÍA DE PRUEBAS
+Fecha: 6 de noviembre de 2026, Chile
+
+Entrega principal: SoundStock_v3.zip
+Este TXT se entrega por separado. El README completo permanece dentro del ZIP.
+
+1. QUÉ SE CONSERVÓ DEL PROYECTO ORIGINAL
+
+Se mantuvieron Django, SQLite y las apps usuarios, catalogo e inventario. También
+se conservaron los modelos y las migraciones anteriores que permiten continuar
+el proyecto recibido, en lugar de reconstruirlo desde cero.
+
+Ya existían el usuario personalizado con roles Administrador, Operador y Consulta,
+los modelos Categoria, Producto y Movimiento, el decorador roles_permitidos,
+la consulta y mantención de productos, los movimientos manuales, filtros,
+exportaciones CSV y reglas para cuidar el historial del stock. Estas funciones
+se conservaron y se integraron con las ampliaciones de Bodega.
+
+En la última adaptación a HTML manual se mantuvieron los nombres y el orden de
+las rutas, el menú, los campos de las pantallas y los archivos del proyecto.
+SoundStock_v3 conserva los 105 archivos de la entrega HTML manual anterior.
+El nombre del ZIP cambia; las carpetas internas de Django conservan sus nombres.
+
+2. CAMBIOS REALIZADOS DURANTE LAS ACTUALIZACIONES
+
+2.1. Entidades necesarias para el caso de Bodega
+
+- Se agregó Proveedor, con razón social, RUT opcional, contacto, email, teléfono,
+  dirección y estado activo.
+- Se agregaron precio y proveedor al producto, y descripción a la categoría.
+  Los registros heredados pueden conservar proveedor pendiente y precio cero
+  hasta completar la información. El formulario de producto exige proveedor activo.
+- Se agregaron Sucursal, Solicitud y DetalleSolicitud, con relaciones protegidas.
+- Las solicitudes registran quién las creó, revisó y despachó, además de fechas,
+  estados, observaciones y cantidades solicitadas, aprobadas y despachadas.
+- Los movimientos de despacho se vinculan con el detalle correspondiente.
+- Las migraciones nuevas de la ampliación E3 son catalogo/0004_... e
+  inventario/0003_...; las migraciones recibidas se conservaron.
+
+2.2. Administración mediante páginas propias
+
+- Se incorporó la mantención de usuarios desde /usuarios/: crear, consultar,
+  editar, cambiar contraseña y desactivar o reactivar.
+- Se agregaron páginas propias para categorías, proveedores, sucursales,
+  solicitudes y sus detalles.
+- Se agregó el flujo de revisar, aprobar, rechazar y despachar solicitudes.
+- Se protege la eliminación de registros que tienen relaciones o historial.
+- Django Admin permanece registrado para compatibilidad y para la actividad que
+  pide registrar Producto, pero /admin/ está desactivado por defecto. El trabajo
+  de E3 se realiza desde las páginas propias del sistema.
+
+2.3. Formularios HTML manuales
+
+- Se reemplazaron ProductoForm, ModelForm, Form y los formsets del código propio
+  por controles HTML escritos en las plantillas.
+- Las vistas reciben una lista explícita de campos mediante request.POST,
+  validan y guardan mediante ORM. Los filtros de lectura utilizan request.GET.
+- Se revisan campos obligatorios, formatos, duplicados, relaciones disponibles,
+  precios no negativos con hasta dos decimales y límites de cantidades.
+- Se preservan los datos válidos cuando hay errores; las contraseñas no se
+  vuelven a mostrar dentro de los campos.
+- En solicitudes, el servidor comprueba los IDs de las líneas, su pertenencia,
+  la ausencia de productos repetidos y el límite de 100 líneas.
+- Se conservaron los archivos forms.py para respetar la estructura, pero ya no
+  contienen clases de formularios ni se importan en el código propio.
+- Se utiliza full_clean() del MODELO para comprobar sus reglas y restricciones.
+  Esto no crea ni utiliza un formulario de Django.
+
+2.4. Autenticación y permisos
+
+- El ingreso propio procesa HTML y POST usando authenticate y login de Django.
+- El cierre de sesión utiliza logout y requiere POST.
+- Las contraseñas se validan con los validadores configurados de Django y se
+  guardan con set_password, como hash.
+- El decorador roles_permitidos conserva login_required y comprueba el rol
+  desde el servidor, aunque se visite una dirección directamente.
+- Un administrador no puede desactivar su propia cuenta ni quitarse su rol.
+- Se mantienen CSRF, escape de las plantillas y cabeceras para evitar guardar
+  páginas administrativas en la caché del navegador.
+- Se validan los destinos del login para impedir redirecciones a sitios externos.
+
+2.5. Solicitudes, stock y persistencia
+
+- Crear o editar una solicitud pendiente no cambia el stock.
+- Aprobar una solicitud registra sus cantidades aprobadas; todavía no descuenta
+  ni reserva existencias.
+- El despacho comprueba todas las líneas y descuenta las cantidades completas
+  dentro de una transacción. Si falla una línea, no se despacha ninguna.
+- Repetir un despacho registrado no vuelve a descontar existencias.
+- Los movimientos manuales conservan los saldos anterior y posterior. Se
+  mantiene el token UUID para evitar duplicar una operación reenviada.
+- Solo se puede corregir o eliminar el último movimiento manual de cada producto.
+  Una salida vinculada a un despacho no se modifica de manera aislada.
+- SQLite se conserva por indicación del profesor. Se usan transacciones
+  IMMEDIATE para serializar las escrituras; no se depende de bloqueos de fila
+  que SQLite no proporciona.
+
+2.6. Reportes, datos de demostración y documentación
+
+- Se agregaron las 20 consultas de Bodega usando exclusivamente Django ORM.
+- Los reportes incluyen filtros por categoría, proveedor, sucursal, solicitud
+  y fechas cuando corresponde, además de paginación.
+- Se incorporó seed_bodega para preparar una demostración repetible y
+  verificar_bd para revisar SQLite, migraciones, integridad y relaciones.
+- Se conservan los comandos Faker de la etapa anterior. Sus funciones de carga
+  de volumen no se presentan como una novedad de esta actualización.
+- Se actualizó README.md con instalación, actualización, permisos, reportes,
+  reglas del inventario, explicación del código y recorrido de evaluación.
+
+2.7. Diseño y gráficos
+
+- Se renovaron la pantalla de ingreso, menú lateral, tablas, formularios,
+  botones, mensajes, indicadores y presentación de las solicitudes.
+- Se agregó adaptación a pantallas pequeñas y navegación con teclado.
+- El panel muestra gráficos de entradas/salidas, estados de solicitudes y
+  existencias por categoría, calculados con los datos guardados mediante ORM.
+- Los períodos de 7, 30 y 90 días afectan al gráfico de actividad. Los indicadores
+  de existencias muestran el stock actual y los estados de solicitudes abarcan
+  todo su historial.
+- Se incorporaron gráficos apropiados en varios reportes, conservando sus tablas.
+  Cada gráfico de reporte representa la página visible, hasta 25 filas.
+- CSS, JavaScript, iconos y gráficos están incluidos localmente en static/.
+  No requieren servicios externos después de instalar las dependencias.
+
+2.8. Qué se hizo específicamente para la entrega v3
+
+- Se volvió a revisar la entrega extraída, con una base SQLite nueva y aislada.
+- Se revisaron pruebas automáticas, migraciones, integridad, reglas del curso,
+  estructura del paquete y funcionamiento de la interfaz.
+- Se actualizó la evidencia técnica de la revisión y el README.
+- Se creó este TXT aparte y se cambió el nombre de la entrega a SoundStock_v3.zip.
+- No se agregaron cambios al código funcional respecto de la última versión
+  HTML manual. Se conservaron modelos, migraciones, rutas, menú, diseño y gráficos.
+
+2.9. Corrección de la lectura de archivos en Windows
+
+La captura del estudiante mostró un error al ejecutar las pruebas con Python 3.13
+en Windows. La lectura path.read_text() no indicaba codificación, por lo que
+Windows intentaba interpretar las plantillas UTF-8 como cp1252.
+
+Se corrigieron las dos lecturas en SoundStock/inventario/tests_e3.py:
+
+   Antes: path.read_text()
+   Ahora: path.read_text(encoding='utf-8')
+
+Una corresponde al análisis de archivos Python y otra a la revisión de las
+plantillas HTML. Se conservan sus comprobaciones y se añade una regresión que
+simula cp1252: falla con la versión anterior y aprueba con la corregida.
+El total actual es de 59 pruebas aprobadas. Esta comprobación se realizó en el
+entorno Linux de revisión simulando la codificación de Windows de la captura.
+
+Para actualizar tu copia sin reemplazar tus datos:
+1) Extrae el ZIP corregido en una carpeta aparte.
+2) Copia únicamente su archivo SoundStock/inventario/tests_e3.py a la misma
+   ubicación de tu proyecto, reemplazando la versión anterior.
+3) Activa tu entorno, entra a la carpeta de manage.py y ejecuta:
+
+   python manage.py test --verbosity 2
+
+Resultado esperado: Ran 59 tests y OK. Se conservan tu db.sqlite3, los modelos,
+las migraciones y las reglas del sistema; no hace falta reconfigurar Windows.
+También puedes actualizar README y las evidencias desde el ZIP corregido.
+
+3. ARCHIVOS QUE CONVIENE ENTENDER
+
+Rutas relativas a la carpeta SoundStock, donde se encuentra manage.py:
+
+- SoundStock/settings.py: SQLite, apps, autenticación y configuración.
+- SoundStock/urls.py: rutas de ingreso, salida y apps.
+- catalogo/models.py: categorías, proveedores y productos.
+- catalogo/views.py: captura manual, validación y CRUD de catálogo.
+- catalogo/gestion.py: contexto reutilizable de listados y paginación.
+- usuarios/models.py: usuario personalizado y perfiles que ya existían.
+- usuarios/views.py: ingreso, salida, mantención y contraseñas.
+- inventario/access.py: decorador reutilizable de acceso por rol.
+- inventario/models.py: sucursales, solicitudes, detalles y movimientos.
+- inventario/views.py: POST de solicitudes, sucursales y movimientos; filtros.
+- inventario/solicitudes.py: alias compatibles que conservan las rutas anteriores.
+- inventario/services.py: transacciones, revisión, despacho y saldos.
+- inventario/reportes.py: las 20 consultas ORM.
+- inventario/panel.py: indicadores y datos de gráficos.
+- templates/includes/campos_formulario.html: controles HTML manuales.
+- templates/registration/login.html: formulario propio de ingreso.
+- static/sitio.css, ui.js y graficos.js: diseño e interacción.
+- inventario/tests.py, tests_e3.py y tests_panel.py: pruebas automáticas.
+- archivos_de_apoyo/PRUEBAS_E3.txt: registro de ejecución de las pruebas.
+- archivos_de_apoyo/VALIDACION_E3.json y VALIDACION_VISUAL.json: evidencias.
+
+4. PREPARACIÓN EN VISUAL STUDIO CODE
+
+Haz el recorrido en una copia del proyecto para usar registros de evaluación.
+Si actualizas una instalación existente, primero respalda tu carpeta y db.sqlite3.
+Conserva tu base y la clave secreta local al reemplazar los archivos de código.
+
+Para una instalación nueva:
+
+1) Extrae SoundStock_v3.zip en una carpeta llamada SoundStock_v3.
+2) En VS Code usa Archivo > Abrir carpeta y abre esa carpeta exterior.
+   Debes ver README.md y la carpeta SoundStock; manage.py está dentro de ella.
+3) Abre Terminal > Nueva terminal y selecciona Símbolo del sistema / CMD.
+4) Desde la carpeta exterior ejecuta los comandos, uno por línea:
+
+   python --version
+   python -m venv venv
+   venv\Scripts\activate.bat
+   cd SoundStock
+   python -m pip install -r requirements.txt
+   python manage.py migrate
+
+Utiliza Python 3.12 o superior compatible con las dependencias fijadas.
+Si ya tienes un entorno virtual, actívalo; no hace falta crearlo otra vez.
+
+En una copia para demostración puedes ejecutar:
+
+   python manage.py seed_bodega
+
+Esto prepara datos ficticios y cuentas de ejemplo. Consulta ACCESO_LOCAL.txt
+para sus credenciales. En una base con información real, esta carga es opcional:
+agrega registros Demo y puede completar precios o proveedores del catálogo inicial.
+
+Para crear tu propia cuenta administradora:
+
+   python manage.py createsuperuser
+
+Para abrir el sistema:
+
+   python manage.py runserver 127.0.0.1:8000
+
+En el navegador abre http://127.0.0.1:8000/
+Si el puerto está ocupado, usa 8001 en el comando y en la dirección.
+Para detener el servidor, vuelve a su terminal y presiona Ctrl+C.
+
+Si usas PowerShell, puedes abrir una terminal CMD en VS Code y utilizar los
+comandos anteriores. Así evitas cambiar políticas de ejecución del equipo.
+
+5. PRUEBAS AUTOMÁTICAS QUE DEBES EJECUTAR
+
+Con el entorno activado y desde la carpeta que contiene manage.py:
+
+   python manage.py check
+
+Esperado: System check identified no issues (0 silenced).
+
+   python manage.py makemigrations --check --dry-run
+
+Esperado: No changes detected. Este comando comprueba; no crea migraciones.
+
+   python manage.py showmigrations usuarios catalogo inventario
+
+Esperado: todas las migraciones marcadas con [X], después de ejecutar migrate.
+
+   python manage.py test --verbosity 2
+
+Esperado: 59 pruebas, resultado OK. La suite usa una base temporal independiente
+y la elimina al terminar; no utiliza tu base de trabajo como base de pruebas.
+
+Distribución de las 59 pruebas:
+- 10 de compatibilidad con el proyecto anterior.
+- 22 del caso Bodega E3.
+- 19 de formularios HTML manuales, entradas inválidas, seguridad y compatibilidad UTF-8 con Windows.
+- 8 de indicadores, gráficos y presentación de datos.
+
+Entre los casos comprobados están: login/logout, redirección al ingreso, permisos
+por rol y respuestas 403; CSRF real; hash y validación de contraseñas; CRUD y
+relaciones protegidas; precios y cantidades inválidas; detalles ajenos, repetidos
+u omitidos; transacciones de solicitudes; stock insuficiente; idempotencia;
+las 20 consultas; y cálculos, límites y escape de los datos de los gráficos.
+
+   python manage.py verificar_bd
+
+Esperado: motor sqlite, migraciones_pendientes igual a 0, integridad ["ok"]
+y errores_claves_foraneas vacío. Los conteos dependen de tus datos.
+
+Para guardar tu propia evidencia de la base:
+
+   python manage.py verificar_bd --salida archivos_de_apoyo\VERIFICACION_BD.json
+
+No debes ejecutar makemigrations sin --check ni borrar migraciones para probar
+esta entrega; el historial requerido ya viene incluido.
+
+6. PRUEBAS MANUALES Y RESULTADOS ESPERADOS
+
+Los ejemplos utilizan registros nuevos con el prefijo EVAL. Los saldos indicados
+corresponden solo a esos productos, no a los productos Demo que ya tenga la base.
+
+PRUEBA 01. ACCESO SIN SESIÓN
+Abre una ventana privada y visita /productos/, /solicitudes/, /movimientos/
+y /reportes/ sin ingresar.
+Esperado: el sistema te envía a /ingresar/; no muestra la información protegida.
+
+PRUEBA 02. LOGIN CORRECTO E INCORRECTO
+Prueba primero una contraseña incorrecta y después una cuenta válida.
+Esperado: error con credenciales inválidas; acceso al panel con las correctas.
+Mostrar/Ocultar cambia la visibilidad del campo sin cambiar la contraseña.
+
+PRUEBA 03. CREAR Y EDITAR CATÁLOGOS
+Como Administrador, crea la categoría "Evaluación v3", un proveedor activo
+"Proveedor Evaluación v3" y una sucursal activa "Sucursal Evaluación v3".
+Completa la dirección de la sucursal. Edita un dato y vuelve a consultar.
+Esperado: registros guardados y cambios visibles. Un nombre duplicado o un email
+inválido debe ser rechazado sin mostrar un error de servidor.
+
+PRUEBA 04. CREAR Y CONSULTAR PRODUCTOS
+Crea dos productos activos en la categoría y con el proveedor anteriores:
+- EVAL-GTR-001: nombre Guitarra Evaluación, precio 10000.50, mínimo 3, ubicación A-01.
+- EVAL-BAS-002: nombre Bajo Evaluación, precio 5000, mínimo 2, ubicación A-02.
+Esperado: ambos aparecen en Productos con stock 0. Búscalos por SKU y categoría.
+Los precios se muestran con formato chileno y conservan los centavos.
+
+PRUEBA 05. EDITAR Y VALIDAR PRODUCTOS
+Cambia el nombre de EVAL-GTR-001 y verifica que permanezca después de recargar.
+Intenta crear otro producto con el mismo SKU. Prueba nombre vacío, precio negativo,
+precio con más de dos decimales y mínimo negativo.
+Esperado: los datos inválidos no se guardan. El navegador puede detener el envío
+por sus controles HTML; la suite automática comprueba también la validación
+del servidor. No deben aparecer errores 500 ni registros incompletos.
+
+PRUEBA 06. ENTRADAS Y RECHAZO DE SALIDAS INVÁLIDAS
+Desde Movimientos registra entrada de 10 para EVAL-GTR-001 y entrada de 4 para
+EVAL-BAS-002, con sus motivos.
+Esperado: stocks 10 y 4; cada movimiento muestra saldo anterior y posterior.
+Intenta salida de 11 para el primero y salida de 1 sin destino.
+Esperado: ambas se rechazan; los saldos siguen en 10 y 4.
+
+PRUEBA 07. AJUSTE Y CORRECCIÓN DEL ÚLTIMO MOVIMIENTO
+Como Administrador, registra un ajuste del primer producto con cantidad 8.
+En un ajuste, la cantidad es el saldo final, no unidades que se suman.
+Esperado: pasa de 10 a 8. Corrige ese último ajuste a 9: debe quedar en 9.
+Mientras existe ese ajuste, intenta corregir la entrada anterior: debe rechazarse.
+Elimina el último ajuste manual: debe restaurarse el saldo de 10.
+
+PRUEBA 08. CREAR Y EDITAR UNA SOLICITUD
+Para la sucursal de evaluación, crea una solicitud con:
+- EVAL-GTR-001: cantidad 3.
+- EVAL-BAS-002: cantidad 1.
+Guarda, consulta y edita su observación mientras está pendiente.
+Esperado: conserva las dos líneas y el estado Pendiente. Stock todavía 10 y 4.
+
+PRUEBA 09. VALIDAR DETALLES
+En una solicitud pendiente, intenta repetir un producto o guardar sin ninguna
+línea válida. Prueba cantidades cero, negativas o no enteras.
+Esperado: se rechaza el guardado inválido y la versión anterior permanece íntegra.
+Agregar línea debe incorporar controles; Quitar línea elimina esa línea al guardar.
+
+PRUEBA 10. APROBAR
+Como Administrador, aprueba la solicitud de la prueba 08.
+Esperado: estado Aprobada, cantidades aprobadas 3 y 1, responsable y fecha.
+El stock permanece en 10 y 4: aprobar no descuenta ni reserva existencias.
+
+PRUEBA 11. DESPACHAR
+Como Administrador u Operador, despacha esa solicitud aprobada.
+Esperado: estado Despachada; cantidades despachadas 3 y 1; stocks 7 y 3;
+salidas vinculadas con los detalles, responsable y fecha de despacho.
+Recarga y vuelve a consultar: no debe volver a descontarse. Si el navegador
+permite reenviar una página anterior, tampoco debe duplicarse. La suite automática
+comprueba específicamente la repetición del POST de despacho.
+
+PRUEBA 12. STOCK INSUFICIENTE Y TRANSACCIÓN COMPLETA
+Crea otra solicitud: primero EVAL-BAS-002 por 1 y después EVAL-GTR-001 por 8.
+Apruébala e intenta despachar.
+Esperado: falla porque EVAL-GTR-001 solo tiene 7; no se descuenta
+la línea de bajo aunque sí tenga existencias. Los stocks continúan 7 y 3,
+la solicitud permanece Aprobada y no se generan salidas parciales.
+
+PRUEBA 13. RECHAZAR Y ELIMINAR SOLICITUDES
+Crea una solicitud temporal. Intenta rechazarla sin explicación y luego informa
+un motivo y recházala.
+Esperado: el rechazo exige motivo; al completarlo queda Rechazada sin cambiar stock.
+Crea otra pendiente para eliminarla como Administrador.
+Esperado: se elimina con sus detalles. Las aprobadas, rechazadas o despachadas
+conservan su historial y no se eliminan como si fueran pendientes.
+
+PRUEBA 14. ELIMINAR Y ARCHIVAR PRODUCTOS
+Crea EVAL-TEMP-003, con stock cero y sin movimientos ni solicitudes.
+Archívalo, consulta Archivados, reactívalo y luego elimínalo.
+Esperado: se permite porque no tiene historial ni existencias.
+Intenta eliminar EVAL-GTR-001, que ya tiene historial, o archivarlo con stock 7.
+Esperado: el sistema lo impide y explica el motivo.
+
+PRUEBA 15. ROLES Y URL DIRECTA
+En una ventana privada distinta usa las cuentas Operador y Consulta.
+- Operador puede crear/editar productos, registrar movimientos y gestionar
+  solicitudes operativas; no puede mantener usuarios ni aprobar/rechazar.
+- Consulta puede consultar los listados y reportes; no puede modificar registros.
+Como Consulta visita /productos/nuevo/ y /usuarios/ directamente.
+Como Operador visita /usuarios/ directamente.
+Esperado: respuesta 403. Ocultar botones no es la única protección.
+Las pruebas automáticas verifican también los POST no autorizados.
+
+PRUEBA 16. USUARIOS Y CONTRASEÑAS
+Como Administrador crea un usuario de prueba, edita su nombre y perfil y cambia
+su contraseña. Intenta una contraseña demasiado corta y confirmación distinta.
+Esperado: las claves inválidas se rechazan; la nueva clave válida permite ingresar.
+Desactiva esa cuenta e intenta entrar con ella: debe rechazarse.
+Si mantenía una sesión abierta, debe perder acceso en la siguiente petición.
+Intenta desactivarte o quitarte tu propio rol Administrador: debe impedirse.
+
+PRUEBA 17. LOGOUT Y OPERACIONES POST
+Presiona Salir y visita de nuevo /productos/.
+Esperado: vuelve a pedir el ingreso.
+Visitar /salir/ con la barra de direcciones usa GET y debe responder 405.
+Las URLs de revisar/despachar solicitudes y cambiar estados también requieren POST.
+GET puede mostrar formularios de edición o confirmación; no debe guardar ni borrar.
+
+PRUEBA 18. CSRF
+Ejecuta la suite automática indicada en la sección 5. Incluye un cliente con
+enforce_csrf_checks=True: los POST sin token deben recibir 403, incluido el login.
+También puedes inspeccionar un formulario con F12 y comprobar que contiene el
+campo oculto csrfmiddlewaretoken. Su presencia visual complementa la prueba del
+servidor; no la sustituye. No desactives el middleware CSRF para hacer funcionar
+una operación.
+
+PRUEBA 19. LAS 20 CONSULTAS ORM
+En Reportes selecciona cada opción del 1 al 20. Completa sus filtros:
+- 2: categoría; 6: proveedor; 7: sucursal; 8: solicitud.
+- 10 y 20: fecha inicial y final.
+Esperado: tabla de resultados; gráfico o indicador cuando corresponda.
+Comprueba especialmente:
+- 6: el proveedor de evaluación incluye los dos productos de evaluación.
+- 8: la solicitud despachada muestra cantidades 3/3/3 y 1/1/1.
+- 9: aparecen los estados de todas las solicitudes registradas.
+- 14: los productos de evaluación aportan 85.003,50 CLP al total si sus stocks
+  siguen en 7 y 3 y sus precios son 10000.50 y 5000. El total incluye el resto.
+- 16: utiliza el mes calendario anterior; puede no mostrar los movimientos de hoy.
+- 19: calcula promedio de unidades solicitadas por solicitud, no precio promedio.
+Prueba un rango invertido y omitir un filtro obligatorio: debe mostrar errores.
+Los reportes de solicitudes consideran su historial, no solo las despachadas.
+
+PRUEBA 20. GRÁFICOS Y DISEÑO
+Abre el panel y cambia los períodos a 7, 30 y 90 días.
+Esperado: cambia el gráfico de entradas/salidas, conservando las existencias
+actuales y los estados históricos de solicitudes. Los gráficos usan datos reales.
+Después de una operación, vuelve al panel o recarga para ver los nuevos valores.
+En Reportes, el gráfico corresponde a su página visible, hasta 25 filas.
+Prueba el menú en una ventana pequeña; debe abrirse y cerrarse, incluyendo Escape.
+Las tablas anchas pueden desplazarse horizontalmente. Revisa que los formularios,
+botones y mensajes se puedan usar con teclado y que no se superpongan.
+
+PRUEBA 21. CSV Y PERSISTENCIA
+Exporta productos y movimientos, abre los CSV y comprueba sus registros.
+Detén el servidor con Ctrl+C e inicia nuevamente el mismo comando runserver.
+Esperado: los registros y saldos siguen guardados en la misma base SQLite.
+No reemplaces ni borres db.sqlite3 entre ambas ejecuciones.
+
+7. RESULTADO DE LA ÚLTIMA REVISIÓN REALIZADA
+
+RESULTADO: APROBADO EN LAS COMPROBACIONES EJECUTADAS.
+
+- Instalación desde paquete extraído, migrate y seed_bodega en base nueva: OK.
+- Django check: sin problemas.
+- makemigrations --check --dry-run: No changes detected.
+- showmigrations: todas las migraciones aplicadas.
+- Suite automática: 59 pruebas aprobadas, resultado OK.
+- Regresión de codificación: error cp1252 reproducido antes de la corrección
+  y lectura UTF-8 comprobada después, conservando las validaciones originales.
+- pip check: No broken requirements found.
+- SQLite: motor sqlite, integridad ["ok"], cero migraciones pendientes y cero
+  errores de claves foráneas.
+- Fuentes y plantillas: sin formularios Django propios, sin widgets de formularios
+  Django en las plantillas, con CSRF en los formularios POST y sin SQL directo
+  de negocio.
+- Chromium: navegación de nueve secciones, períodos 7/30/90, filtros de reportes,
+  creación/edición/eliminación de productos, entrada de stock, solicitud,
+  aprobación, despacho y actualización de gráficos: OK.
+- Chromium: altas de catálogos, sucursales y usuarios; edición de usuario,
+  errores de contraseña, cambio de clave, ingreso con la nueva clave y bloqueo
+  de acceso por rol: OK.
+- Escritorio 1440 x 1050 y móvil 390 x 844; menú, Escape y cierre de sesión: OK.
+- Errores JavaScript detectados durante el recorrido: ninguno.
+- Solicitudes a servicios externos durante el recorrido principal: ninguna.
+- Inspección visual del panel de escritorio/móvil y los errores de contraseña: OK.
+- Código funcional, rutas, menú, modelos, migraciones, CSS y JavaScript:
+  conservados respecto de la entrega HTML manual anterior.
+
+Las evidencias de ejecución están dentro del ZIP en:
+SoundStock/archivos_de_apoyo/PRUEBAS_E3.txt
+SoundStock/archivos_de_apoyo/VALIDACION_E3.json
+SoundStock/archivos_de_apoyo/VALIDACION_VISUAL.json
+
+La integridad del ZIP y sus 105 nombres de archivo se comprobaron al empaquetarlo.
+Se excluyeron entornos virtuales, cachés, bases SQLite, la clave secreta local y
+las capturas internas de revisión.
+
+El recorrido de Chromium corresponde a la revisión visual anterior; esta
+corrección solo cambia pruebas de lectura de archivos y mantiene idéntico el
+código de la aplicación y sus recursos visuales.
+
+Las pruebas que aparecen como realizadas arriba fueron ejecutadas en el entorno
+de revisión. El recorrido manual de la sección 6 está escrito para que lo hagas
+tú en tu computador y prepares la demostración; no se afirma haberlo ejecutado
+en tu instalación personal.
+
+8. QUÉ EXPLICAR DURANTE LA EVALUACIÓN
+
+- Un control HTML envía un campo por POST; la vista lo recibe, valida y guarda
+  con ORM. Puedes mostrar el token CSRF y el decorador de la misma operación.
+- Producto representa su estado activo/inactivo con el campo activo. El atributo
+  estado_stock calcula Agotado, Bajo o Disponible; no es otra columna editable.
+- Movimiento cumple el papel llamado MovimientoStock en la guía.
+- El perfil se guarda en Usuario.rol. La actividad permite grupos o perfiles.
+- El stock cambia desde Movimientos y Despacho para conservar sus saldos e historial.
+- SQLite responde a la indicación del profesor; el texto de la guía menciona MySQL.
+- El administrador propio es la interfaz normal. Producto sigue registrado en
+  Django Admin, cuya URL solo se habilita expresamente para compatibilidad.
+- Las transacciones evitan guardar medio despacho y la idempotencia evita duplicarlo.
+- El gráfico se alimenta de consultas ORM; no modifica la base al visualizarlo.
+- La API REST y JWT corresponden a la etapa posterior del caso semestral;
+  no se presentan como funcionalidades implementadas de esta entrega E3.
+
+En el documento adjunto la escala de apreciación no contiene indicadores ni
+puntajes. El docente debe confirmar cuáles son sus 10 consultas definitivas;
+la aplicación incluye las 20 de Bodega para cubrir la lista completa.
+La comparación con los videos 16 a 25 pudo realizarse por sus temas publicados;
+no se obtuvo una transcripción utilizable para comparar todo su código.
+
+Antes de entregar, practica la explicación individual, prepara las evidencias
+que solicite el profesor y sube el proyecto a la plataforma indicada. La entrega
+de archivos aquí no lo publica automáticamente en INACAP ni en GitHub.
